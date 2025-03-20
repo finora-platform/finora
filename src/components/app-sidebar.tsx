@@ -23,7 +23,7 @@ const menuItems = [
   {
     title: "Sales hub",
     icon: Phone,
-    href: "/dashboard/sales-hub",
+    href: "/dashboard/sales",
   },
   {
     title: "Clients",

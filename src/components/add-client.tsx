@@ -1,3 +1,4 @@
+
 /**
  * Replace this with dynamic form thats complletely template driven
  */
@@ -21,17 +22,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface FormData {
-  clientName: string;
-  kycStatus: string;
-  assignedRM: string;
-  riskProfile: string;
-  email: string;
-  number: string;
-  plan: string;
-  createdDate: string;
-}
-
 const ClientForm = ({ 
   onSubmit,
   initialData = {},
@@ -39,7 +29,7 @@ const ClientForm = ({
   onCancel,
   mode = 'create'
 }) => {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     clientName: '',
     kycStatus: 'pending',
     assignedRM: '',
@@ -51,17 +41,17 @@ const ClientForm = ({
     ...initialData
   });
 
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState({});
   const [isDirty, setIsDirty] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.clientName.trim()) 
-      newErrors['clientName'] = 'Client name is required';
+      newErrors.clientName = 'Client name is required';
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/))
-      newErrors['email'] = 'Valid email is required';
+      newErrors.email = 'Valid email is required';
     if (!formData.number.match(/^\+?[\d\s-]{10,}$/))
-      newErrors['number'] = 'Valid phone number is required';
+      newErrors.number = 'Valid phone number is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
