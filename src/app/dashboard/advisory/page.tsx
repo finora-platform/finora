@@ -1,11 +1,11 @@
-// src/app/dashboard/advisory/page.tsx
-"use client";
+"use client"
 
-import React, { useState } from 'react';
-import { StockSearch } from './components/stock-search';
-import { TradeCard } from './components/trade-card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react'
+import { StockSearch } from './components/stock-search'
+import { TradeCard } from './components/trade-card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AlertTriangle } from 'lucide-react'
+import  AdvisoryTradeList  from '@/components/trade-card'
 
 // Dummy data for trades
 const dummyTrades = [
@@ -47,13 +47,14 @@ const dummyTrades = [
     },
     riskReward: "2/3"
   }
-];
+]
 
 export default function AdvisoryPage() {
-  const [mainTab, setMainTab] = useState('trades');
-  const [tradeTypeTab, setTradeTypeTab] = useState('equity');
-  const [tradeStatusTab, setTradeStatusTab] = useState('active');
-  const [activeTrades, setActiveTrades] = useState(dummyTrades);
+  const [mainTab, setMainTab] = useState('trades')
+  const [tradeTypeTab, setTradeTypeTab] = useState('equity')
+  const [tradeStatusTab, setTradeStatusTab] = useState('active')
+  const [activeTrades, setActiveTrades] = useState(dummyTrades)
+  const [selectedClientId, setSelectedClientId] = useState<number | undefined>(undefined)
 
   const UnderMaintenanceScreen = () => (
     <div className="flex flex-col items-center justify-center py-20 text-gray-500">
@@ -61,7 +62,7 @@ export default function AdvisoryPage() {
       <h3 className="text-xl font-medium mb-2">Under Maintenance</h3>
       <p>This section is currently under maintenance. Please check back later.</p>
     </div>
-  );
+  )
 
   return (
     <div className="w-full">
@@ -90,7 +91,7 @@ export default function AdvisoryPage() {
           </TabsList>
         </div>
 
-        {/* Trades Tab Content */}
+        Trades Tab Content
         <TabsContent value="trades" className="mt-6 w-full px-4">
           {/* Create new section */}
           <div className="mb-6 w-full">
@@ -145,7 +146,7 @@ export default function AdvisoryPage() {
           </div>
           
           {/* Trades list section */}
-          <div className="w-full">
+          {/* <div className="w-full">
             <Tabs defaultValue="active" value={tradeStatusTab} onValueChange={setTradeStatusTab}>
               <TabsList className="mb-4 justify-start bg-transparent border-b w-full space-x-6 rounded-none">
                 <TabsTrigger value="active" className="relative data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
@@ -185,7 +186,7 @@ export default function AdvisoryPage() {
                 </div>
               </TabsContent>
             </Tabs>
-          </div>
+          </div> */}
         </TabsContent>
 
         {/* Stock Basket Tab Content */}
@@ -198,6 +199,40 @@ export default function AdvisoryPage() {
           <UnderMaintenanceScreen />
         </TabsContent>
       </Tabs>
+
+      {/* Advisory Trade List Section */}
+      <div className="mt-12 border-t pt-8">
+        {/* <h2 className="text-xl font-semibold mb-6">Advisory Trade Management</h2>
+        <p className="text-gray-600 mb-6">
+          Below is the advisory trade list where you can manage trades for your clients. You can edit trade details and exit trades when needed.
+        </p> */}
+        
+        <Tabs defaultValue="active">
+          <TabsList className="mb-4 justify-start bg-transparent border-b w-full space-x-6 rounded-none">
+            <TabsTrigger value="active" className="relative data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
+              Active
+            </TabsTrigger>
+            <TabsTrigger value="exited" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
+              Exited
+            </TabsTrigger>
+            <TabsTrigger value="all" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
+              All Trades
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="active" className="mt-0">
+            <AdvisoryTradeList statusFilter="ACTIVE" clientId={selectedClientId} />
+          </TabsContent>
+          
+          <TabsContent value="exited" className="mt-0">
+            <AdvisoryTradeList statusFilter="EXITED" clientId={selectedClientId} />
+          </TabsContent>
+          
+          <TabsContent value="all" className="mt-0">
+            <AdvisoryTradeList clientId={selectedClientId} />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
-  );
+  )
 }

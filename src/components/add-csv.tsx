@@ -1,218 +1,235 @@
-'use Client'
+'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { Button } from '@/components/ui/button';
+import { Upload, X, FileText, AlertCircle, Check } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser, useSession } from '@clerk/nextjs'
-import { createClient } from '@supabase/supabase-js'
-import { Button } from '@/components/ui/button'
-import { Upload, X, FileText, AlertCircle, Check } from 'lucide-react'
-import { useToast } from "@/hooks/use-toast"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import Papa from 'papaparse'
+import { createClerkSupabaseClient } from '@/utils/supabaseClient';
+
+import Papa from 'papaparse';
 
 export default function CSVUpload() {
-  const [file, setFile] = useState<File | null>(null)
-  const [pastedText, setPastedText] = useState('')
-  const [csvData, setCSVData] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [validated, setValidated] = useState(false)
-  const [previewVisible, setPreviewVisible] = useState(false)
-  const { toast } = useToast()
-  const { user } = useUser()
-  const { session } = useSession()
+  const [file, setFile] = useState<File | null>(null);
+  const [pastedText, setPastedText] = useState('');
+  const [csvData, setCSVData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [validated, setValidated] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const { toast } = useToast();
+
 
   // Define required columns and allowed values
-  const requiredColumns = ['Name', 'email', 'Whatsapp number', 'assigned RM', 'Risk', 'Ekyc status', 'Plan']
+  const requiredColumns = ['name', 'email', 'whatsapp', 'assigned_rn', 'risk', 'ekyc_status', 'plan'];
   const allowedValues = {
     Risk: ['Aggressive', 'Hard', 'Conservative'],
     Plan: ['Elite', 'Premium', 'Standard']
-  }
+  };
 
-  // Create Supabase client with Clerk token
-  // const createClerkSupabaseClient = () => {
-  //   return createClient(
-  //     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  //     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  //     {
-  //       global: {
-  //         fetch: async (url: string, options: RequestInit = {}) => {
-  //           const clerkToken = await session?.getToken({ template: 'supabase' })
-  //           const headers = new Headers(options.headers || {})
-  //           headers.set('Authorization', `Bearer ${clerkToken}`)
-  //           return fetch(url, { ...options, headers })
-  //         },
-  //       },
-  //     }
-  //   )
-  // }
 
-  // const supabase = createClerkSupabaseClient()
+  const { user } = useUser()
+  // The `useSession()` hook will be used to get the Clerk `session` object
+  const { session } = useSession()
 
+  // Create a custom supabase client that injects the Clerk Supabase token into the request headers
+  
+  // Validate CSV data
   const validateCSV = (csvText: string) => {
     Papa.parse(csvText, {
       header: true,
       complete: (result) => {
         if (result.data.length === 0 || (result.data.length === 1 && Object.keys(result.data[0]).length === 0)) {
-          setError('The file appears to be empty')
-          setValidated(false)
-          return
+          setError('The file appears to be empty');
+          setValidated(false);
+          return;
+        }
+        // Store parsed data for preview
+        setCSVData(result.data);
+        setPreviewVisible(true);
+
+        const headers = Object.keys(result.data[0]);
+
+        // Check for missing columns
+        const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+        if (missingColumns.length > 0) {
+          setError(`Missing required columns: ${missingColumns.join(', ')}`);
+          setValidated(false);
+          return;
         }
 
-        // Store parsed data for preview
-        setCSVData(result.data)
-        setPreviewVisible(true)
-        
-        const headers = Object.keys(result.data[0])
-        
-        // Check for missing columns
-        const missingColumns = requiredColumns.filter(col => !headers.includes(col))
-        
-        if (missingColumns.length > 0) {
-          setError(`Missing required columns: ${missingColumns.join(', ')}`)
-          setValidated(false)
-          return
-        }
-        
         // Validate values in Risk and Plan columns
-        let invalidRows: string[] = []
-        
+        let invalidRows: string[] = [];
         result.data.forEach((row: any, index: number) => {
           // Skip empty rows or rows without all required fields
-          if (Object.keys(row).length === 0 || Object.values(row).every(val => val === "")) return
-          
+          if (Object.keys(row).length === 0 || Object.values(row).every(val => val === "")) return;
+
           // Check Risk values
           if (row.Risk && !allowedValues.Risk.includes(row.Risk)) {
-            invalidRows.push(`Row ${index + 2}: Invalid Risk value "${row.Risk}". Must be one of: ${allowedValues.Risk.join(', ')}`)
+            invalidRows.push(`Row ${index + 2}: Invalid Risk value "${row.Risk}". Must be one of: ${allowedValues.Risk.join(', ')}`);
           }
-          
+
           // Check Plan values
           if (row.Plan && !allowedValues.Plan.includes(row.Plan)) {
-            invalidRows.push(`Row ${index + 2}: Invalid Plan value "${row.Plan}". Must be one of: ${allowedValues.Plan.join(', ')}`)
+            invalidRows.push(`Row ${index + 2}: Invalid Plan value "${row.Plan}". Must be one of: ${allowedValues.Plan.join(', ')}`);
           }
-        })
-        
+        });
+
         if (invalidRows.length > 0) {
-          setError(`CSV has invalid values:\n${invalidRows.join('\n')}`)
-          setValidated(false)
+          setError(`CSV has invalid values:\n${invalidRows.join('\n')}`);
+          setValidated(false);
         } else {
-          setError('')
-          setValidated(true)
+          setError('');
+          setValidated(true);
           toast({
             title: "Success",
             description: "CSV file validated successfully!",
-          })
+          });
         }
       },
       error: (error) => {
-        setError(`Error parsing the CSV file: ${error}`)
-        setValidated(false)
+        setError(`Error parsing the CSV file: ${error}`);
+        setValidated(false);
       }
-    })
-  }
+    });
+  };
 
+  // Handle file drop
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    const droppedFile = e.dataTransfer.files[0]
+    e.preventDefault();
+    const droppedFile = e.dataTransfer.files[0];
     if (droppedFile?.type === 'text/csv' || droppedFile?.name.endsWith('.csv') || droppedFile?.name.endsWith('.tsv')) {
-      setFile(droppedFile)
-      setError('')
-      setValidated(false)
-      
-      // Read and validate file
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const text = e.target?.result as string
-        validateCSV(text)
-      }
-      reader.readAsText(droppedFile)
-    } else {
-      setError('Please upload a CSV or TSV file')
-      setValidated(false)
-    }
-  }, [])
+      setFile(droppedFile);
+      setError('');
+      setValidated(false);
 
+      // Read and validate file
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        validateCSV(text);
+      };
+      reader.readAsText(droppedFile);
+    } else {
+      setError('Please upload a CSV or TSV file');
+      setValidated(false);
+    }
+  }, []);
+
+  // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]
+    const selectedFile = e.target.files?.[0];
     if (selectedFile?.type === 'text/csv' || selectedFile?.name.endsWith('.csv') || selectedFile?.name.endsWith('.tsv')) {
-      setFile(selectedFile)
-      setError('')
-      setValidated(false)
-      
+      setFile(selectedFile);
+      setError('');
+      setValidated(false);
+
       // Read and validate file
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (e) => {
-        const text = e.target?.result as string
-        validateCSV(text)
-      }
-      reader.readAsText(selectedFile)
+        const text = e.target?.result as string;
+        validateCSV(text);
+      };
+      reader.readAsText(selectedFile);
     } else {
-      setError('Please upload a CSV or TSV file')
-      setValidated(false)
+      setError('Please upload a CSV or TSV file');
+      setValidated(false);
     }
-  }
+  };
 
+  // Handle pasted text
   const handlePasteText = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value
-    setPastedText(text)
-    setError('')
-    setValidated(false)
-    
+    const text = e.target.value;
+    setPastedText(text);
+    setError('');
+    setValidated(false);
+
     if (text.trim()) {
-      validateCSV(text)
+      validateCSV(text);
     } else {
-      setPreviewVisible(false)
+      setPreviewVisible(false);
     }
-  }
+  };
 
+  // Remove file and reset state
   const handleRemoveFile = () => {
-    setFile(null)
-    setPastedText('')
-    setCSVData([])
-    setError('')
-    setValidated(false)
-    setPreviewVisible(false)
+    setFile(null);
+    setPastedText('');
+    setCSVData([]);
+    setError('');
+    setValidated(false);
+    setPreviewVisible(false);
+  };
+
+  // Handle data import
+  // Handle data import - UPDATED VERSION
+const handleImport = async () => {
+  if (!validated || !user) {
+    toast({
+      title: "Validation Required",
+      description: "Please ensure the data is valid and you're logged in before importing.",
+      variant: "destructive"
+    });
+    return;
   }
 
-  const handleImport = async () => {
-    if (!validated) {
-      toast({
-        title: "Validation Required",
-        description: "Please ensure the data is valid before importing.",
-        variant: "destructive"
-      })
-      return
-    }
+  setLoading(true);
+  try {
+    const client = await createClerkSupabaseClient(session);
     
-    setLoading(true)
-    try {
-      // Add actual import logic here using supabase
-      const { error } = await supabase
-        .from('relationship_managers')
-        .insert(csvData)
-      
-      if (error) throw error
-      
-      setLoading(false)
-      toast({
-        title: "Success",
-        description: "Data imported successfully!",
-      })
-      
-      // Reset the form
-      handleRemoveFile()
-    } catch (err: any) {
-      setError(`Import failed: ${err.message || 'Please try again.'}`)
-      setLoading(false)
+    // Prepare data with consistent formatting
+    const formattedData = csvData.map(row => ({
+      name: row.name || '',
+      email: row.email?.toLowerCase() || '', // normalize email
+      whatsapp: row.whatsapp || '',
+      assigned_rn: row.assigned_rn || '',
+      risk: (row.risk || '').toLowerCase(), // normalize risk
+      ekyc_status: (row.ekyc_status || 'pending').toLowerCase(), // default pending
+      plan: (row.plan || 'standard').toLowerCase(), // default standard
+      created_at: new Date().toISOString(), // current timestamp
+      user_id: user.id, // add current user ID
+      role: row.role || '', // optional field
+    }));
+
+    // Insert in batches
+    const batchSize = 100;
+    for (let i = 0; i < formattedData.length; i += batchSize) {
+      const batch = formattedData.slice(i, i + batchSize);
+      const { error } = await client
+        .from('client3')
+        .insert(batch)
+        .select(); // Return inserted rows for error checking
+
+      if (error) throw error;
     }
+
+    toast({
+      title: "Success",
+      description: `${formattedData.length} records imported successfully!`,
+    });
+    handleRemoveFile();
+  } catch (err: any) {
+    const errorMsg = err.message || 'Import failed. Please check for duplicate emails.';
+    setError(errorMsg);
+    toast({
+      title: "Error",
+      description: errorMsg,
+      variant: "destructive"
+    });
+  } finally {
+    setLoading(false);
   }
+};
 
   return (
     <div className="container mx-auto p-4">
       <Card>
         <CardHeader>
-          <CardTitle>Add data to public.relationship_managers</CardTitle>
+          <CardTitle>Add data to public.client3</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="upload">
@@ -222,7 +239,7 @@ export default function CSVUpload() {
             </TabsList>
 
             <TabsContent value="upload">
-              <div 
+              <div
                 className="border-2 border-dashed rounded-lg p-8 text-center hover:border-gray-400 transition-colors"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
@@ -283,46 +300,11 @@ export default function CSVUpload() {
               <AlertDescription className="whitespace-pre-line">{error}</AlertDescription>
             </Alert>
           )}
-
-          {previewVisible && csvData.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-lg font-medium mb-4">Preview</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      {Object.keys(csvData[0] || {}).map((header) => (
-                        <th key={header} className="p-2 border text-left">
-                          {header}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {csvData.slice(0, 5).map((row, i) => (
-                      <tr key={i}>
-                        {Object.values(row).map((cell: any, j) => (
-                          <td key={j} className="p-2 border">
-                            {cell}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {csvData.length > 5 && (
-                <p className="text-sm text-gray-500 mt-2">
-                  Showing 5 of {csvData.length} rows
-                </p>
-              )}
-            </div>
-          )} */}
         </CardContent>
         <CardFooter className="justify-between">
           <Button variant="outline" onClick={handleRemoveFile}>Cancel</Button>
-          <Button 
-            disabled={(!file && !pastedText) || loading || !validated} 
+          <Button
+            disabled={(!file && !pastedText) || loading || !validated}
             onClick={handleImport}
           >
             {loading ? 'Importing...' : 'Import data'}
@@ -330,5 +312,5 @@ export default function CSVUpload() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
