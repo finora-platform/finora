@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,21 +25,34 @@ const formatTime = (dateString: string) => {
   });
 };
 
+// Updated Trade interface to match the actual data structure
+interface TradeData {
+  stock: string;
+  tradeType: "BUY" | "SELL";
+  segment: "EQUITY" | "F&O" | "COMMODITIES";
+  timeHorizon: "INTRADAY" | "SWING" | "LONGTERM";
+  entry: string;
+  stoploss: string;
+  targets: string[];
+  status: "ACTIVE" | "COMPLETED";
+  createdAt: string;
+  rowId?: number;
+  advisorId?: string;
+}
+
 interface Trade {
-  id: number;
-  user_id: number;
-  trade_data: {
-    stock: string;
-    tradeType: "BUY" | "SELL";
-    segment: "EQUITY" | "F&O" | "COMMODITIES";
-    timeHorizon: "INTRADAY" | "SWING" | "LONGTERM";
-    entry: string;
-    stoploss: string;
-    targets: string[];
-    status: "ACTIVE" | "COMPLETED";
-    createdAt: string;
-  };
-  created_at: string;
+  id?: number; // Optional because we're generating it
+  rowId?: number;
+  advisorId?: string;
+  stock: string;
+  tradeType: "BUY" | "SELL";
+  segment: "EQUITY" | "F&O" | "COMMODITIES";
+  timeHorizon: "INTRADAY" | "SWING" | "LONGTERM";
+  entry: string;
+  stoploss: string;
+  targets: string[];
+  status: "ACTIVE" | "COMPLETED";
+  createdAt: string;
 }
 
 interface Client {
@@ -55,12 +67,9 @@ interface ClientSidePanelProps {
   onClose: () => void;
 }
 
-// TradeCard component now has access to the utility functions
+// Updated TradeCard component
 export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const tradeData = trade.trade_data;
-
-  console.log("Rendering TradeCard for trade ID:", trade.id, trade);
 
   return (
     <div
@@ -71,18 +80,18 @@ export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) 
       <div className="flex justify-between items-center">
         {/* Left Section (Type & Name) */}
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className={`font-semibold ${tradeData?.tradeType === "BUY" ? "text-green-600" : "text-red-600"}`}>
-            {tradeData?.tradeType || "N/A"}
+          <span className={`font-semibold ${trade.tradeType === "BUY" ? "text-green-600" : "text-red-600"}`}>
+            {trade.tradeType || "N/A"}
           </span>
-          <span className="text-gray-500">{tradeData?.stock || "Unknown Stock"}</span>
-          {tradeData?.segment && <Badge variant="outline">{tradeData.segment}</Badge>}
-          {tradeData?.timeHorizon && <Badge variant="outline">{tradeData.timeHorizon}</Badge>}
+          <span className="text-gray-500">{trade.stock || "Unknown Stock"}</span>
+          {trade.segment && <Badge variant="outline">{trade.segment}</Badge>}
+          {trade.timeHorizon && <Badge variant="outline">{trade.timeHorizon}</Badge>}
         </div>
 
         {/* Right Section (Date & Time) */}
         <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span>📅 {formatDate(trade.created_at)}</span>
-          <span>⏰ {formatTime(trade.created_at)}</span>
+          <span>📅 {formatDate(trade.createdAt)}</span>
+          <span>⏰ {formatTime(trade.createdAt)}</span>
         </div>
       </div>
 
@@ -92,14 +101,14 @@ export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) 
           {/* Header Section */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Badge variant={tradeData?.tradeType === "BUY" ? "success" : "destructive"}>
-                {tradeData?.tradeType || "N/A"}
+              <Badge variant={trade.tradeType === "BUY" ? "success" : "destructive"}>
+                {trade.tradeType || "N/A"}
               </Badge>
-              <span className="font-bold text-lg">{tradeData?.stock || "Unknown Stock"}</span>
-              {tradeData?.segment && <Badge variant="outline">{tradeData.segment}</Badge>}
-              {tradeData?.status && (
-                <Badge variant={tradeData.status === "ACTIVE" ? "default" : "secondary"}>
-                  {tradeData.status}
+              <span className="font-bold text-lg">{trade.stock || "Unknown Stock"}</span>
+              {trade.segment && <Badge variant="outline">{trade.segment}</Badge>}
+              {trade.status && (
+                <Badge variant={trade.status === "ACTIVE" ? "default" : "secondary"}>
+                  {trade.status}
                 </Badge>
               )}
             </div>
@@ -112,16 +121,16 @@ export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3 text-sm text-gray-700">
             <div>
               <p className="flex items-center gap-1 font-medium">⏳ Entry</p>
-              <span className="text-gray-900 font-semibold">{tradeData?.entry ?? "—"}</span>
+              <span className="text-gray-900 font-semibold">{trade.entry ?? "—"}</span>
             </div>
             <div>
               <p className="flex items-center gap-1 font-medium">🚫 Stoploss</p>
-              <span className="text-gray-900 font-semibold">{tradeData?.stoploss ?? "—"}</span>
+              <span className="text-gray-900 font-semibold">{trade.stoploss ?? "—"}</span>
             </div>
             <div>
               <p className="flex items-center gap-1 font-medium">🚩 Target(s)</p>
               <span className="text-gray-900 font-semibold">
-                {tradeData?.targets?.length > 0 ? tradeData.targets.join(" » ") : "No targets"}
+                {trade.targets?.length > 0 ? trade.targets.join(" » ") : "No targets"}
               </span>
             </div>
           </div>
@@ -129,10 +138,10 @@ export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) 
           {/* Date & Debug Info */}
           <div className="mt-4 text-zinc-800 text-sm">
             <p>
-              <strong>📩 Created At:</strong> {formatDate(trade.created_at)}
+              <strong>📩 Created At:</strong> {formatDate(trade.createdAt)}
             </p>
             <p>
-              <strong>⏰ Time:</strong> {formatTime(trade.created_at)}
+              <strong>⏰ Time:</strong> {formatTime(trade.createdAt)}
             </p>
 
             {/* Debug JSON Output */}
@@ -159,27 +168,56 @@ const ClientSidePanel: React.FC<ClientSidePanelProps> = ({ client, onClose }) =>
   useEffect(() => {
     const fetchTrades = async () => {
       const supabase = await createClerkSupabaseClient(session);
+      setLoading(true);
       
-      let query = supabase
+      // First, fetch all trade data for this user
+      const { data, error } = await supabase
         .from("user_trades")
         .select("*")
         .eq("user_id", client.id);
-
-      if (segmentFilter !== "all") {
-        query = query.contains("trade_data", { segment: segmentFilter });
-      }
-
-      if (statusFilter !== "all") {
-        query = query.contains("trade_data", { status: statusFilter });
-      }
-
-      const { data, error } = await query;
-
-      if (!error) {
-        setTrades(data || []);
-      } else {
+        
+      if (error) {
         console.error("Error fetching trades:", error);
+        setLoading(false);
+        return;
       }
+      
+      if (!data || data.length === 0) {
+        setTrades([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Extract and process the trade data from the JSON array
+      let allTrades: Trade[] = [];
+      
+      data.forEach((row, index) => {
+        // Each row contains an array of trade objects
+        if (row.trade_data && Array.isArray(row.trade_data)) {
+          // Map each trade to include the row ID for reference
+          const tradesWithId = row.trade_data.map((tradeData: TradeData, tradeIndex: number) => ({
+            id: index * 1000 + tradeIndex, // Generate a unique ID for each trade
+            rowId: row.id, // Keep the database row ID for updates
+            advisorId: row.advisor_id,
+            ...tradeData
+          }));
+          
+          allTrades = [...allTrades, ...tradesWithId];
+        }
+      });
+      
+      // Apply filters
+      let filteredTrades = allTrades;
+      
+      if (segmentFilter !== "all") {
+        filteredTrades = filteredTrades.filter(trade => trade.segment === segmentFilter);
+      }
+      
+      if (statusFilter !== "all") {
+        filteredTrades = filteredTrades.filter(trade => trade.status === statusFilter);
+      }
+      
+      setTrades(filteredTrades);
       setLoading(false);
     };
 
@@ -263,7 +301,7 @@ const ClientSidePanel: React.FC<ClientSidePanelProps> = ({ client, onClose }) =>
       ) : (
         trades.map((trade, index) => (
           <TradeCard 
-            key={trade.id} 
+            key={trade.id || index} 
             trade={trade} 
             isLast={index === trades.length - 1}
           />

@@ -5,7 +5,7 @@ import { StockSearch } from './components/stock-search'
 import { TradeCard } from './components/trade-card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertTriangle } from 'lucide-react'
-import  AdvisoryTradeList  from '@/components/trade-card'
+import  AdvisoryTradeList  from '@/components/advisory-trade-list'
 
 // Dummy data for trades
 const dummyTrades = [

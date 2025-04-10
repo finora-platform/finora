@@ -1,3 +1,4 @@
+"use client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect, useRef } from "react";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
-import { X, ChevronDown, Filter } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { useSession } from "@clerk/nextjs";
 
 type Client = {
@@ -83,7 +84,6 @@ export default function PostAdviceForm({
         .not("plan", "is", null);
       
       if (!error && data) {
-        // Count clients by plan
         const planCounts: Record<string, number> = {};
         data.forEach(client => {
           if (client.plan) {
@@ -91,7 +91,6 @@ export default function PostAdviceForm({
           }
         });
         
-        // Convert to array for rendering
         const plans = Object.entries(planCounts).map(([name, count]) => ({
           name,
           count
@@ -167,11 +166,6 @@ export default function PostAdviceForm({
     setShowPlanSelector(false);
   };
 
-  const handleRemoveClient = (clientId: number) => {
-    setSelectedClients(prev => prev.filter(client => client.id !== clientId));
-  };
-
-  // 
   const handleSubmit = async () => {
     if ((activeTab === "individual" && !selectedClient) || 
         (activeTab === "plan" && (!selectedPlan || selectedClients.length === 0)) || 
@@ -184,6 +178,7 @@ export default function PostAdviceForm({
   
     try {
       const supabase = await createClerkSupabaseClient(session);
+      const advisorId = session?.user.id;
   
       const newTrade: TradeData = {
         stock: selectedStock || "UNKNOWN",
@@ -197,7 +192,7 @@ export default function PostAdviceForm({
         rangeEntry,
         rangeTarget,
         status: "ACTIVE",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
       };
   
       const clientsToNotify = activeTab === "individual" 
@@ -209,23 +204,21 @@ export default function PostAdviceForm({
         const { data: existingRow, error: fetchError } = await supabase
           .from("user_trades")
           .select("trade_data")
-          .eq("advisor_id", advisorId)  // or use user_id if applicable
+          .eq("advisor_id", advisorId)
           .eq("user_id", client.id)
           .single();
   
         if (fetchError && fetchError.code !== "PGRST116") {
-          // PGRST116 = no rows found
           console.error("Fetch error:", fetchError);
           return;
         }
   
         const existingTrades = existingRow?.trade_data || [];
-  
         const updatedTrades = [...existingTrades, newTrade];
   
         if (existingRow) {
           // Update existing row
-          const { error: updateError } = await supabase
+          await supabase
             .from("user_trades")
             .update({
               trade_data: updatedTrades,
@@ -233,11 +226,9 @@ export default function PostAdviceForm({
             })
             .eq("user_id", client.id)
             .eq("advisor_id", advisorId);
-  
-          if (updateError) console.error("Update error:", updateError);
         } else {
           // Insert new row
-          const { error: insertError } = await supabase
+          await supabase
             .from("user_trades")
             .insert({
               user_id: client.id,
@@ -246,8 +237,6 @@ export default function PostAdviceForm({
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
-  
-          if (insertError) console.error("Insert error:", insertError);
         }
       });
   
@@ -271,7 +260,6 @@ export default function PostAdviceForm({
       setIsSubmitting(false);
     }
   };
-  
 
   return (
     <Card className="max-w-lg w-full border rounded-xl shadow-lg p-4" ref={searchRef}>

@@ -70,6 +70,15 @@ export const StockSearch = () => {
           { ticker: "RELINFRA", name: "Reliance Infrastructure Ltd" },
           {ticker: "TATAMOTORS", name: "Tata Motors Ltd" },
           {ticker: "MARUTI", name: "Maruti Suzuki India Ltd"},
+          {ticker: "TATASTEEL", name: "Tata Steel Ltd"},
+          {ticker: "HINDALCO", name: "Hindalco Industries Ltd"},
+          {ticker: "ONGC", name: "Oil and Natural Gas Corporation Ltd"},
+          {ticker: "NTPC", name: "NTPC Limited"},
+          {ticker: "HDFCBANK", name: "HDFC Bank Ltd"},
+          {ticker: "ICICIBANK", name: "ICICI Bank Ltd"},
+          {ticker: "KOTAKBANK", name: "Kotak Mahindra Bank Ltd"},
+          {ticker: "AXISBANK", name: "Axis Bank Ltd"},
+          {ticker: "SBIN", name: "State Bank of India"},
         ]);
       } finally {
         setIsLoading(false);
