@@ -105,19 +105,22 @@ export default function RationaleModal() {
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
+          variant="ghost"
           className="text-orange-500 bg-white shadow-none hover:bg-white"
           onClick={() => setIsOpen(true)}
         >
           Open Rationale
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[80vw] max-w-[80vw] h-[80vh] max-h-[80vh] overflow-auto">
+      <DialogContent className="w-[80vw] max-w-none h-[80vh] max-h-[80vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="sr-only">Rationale Editor</DialogTitle>
         </DialogHeader>
         {!showPreview ? (
           <>
-            <div className="border rounded-md p-4 min-h-[300px] h-[66vh]">
+            <div className="border rounded-md p-4 min-h-[300px] h-[66vh]"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}>
               <div className="relative h-full">
                 <textarea
                   className="absolute w-full h-full resize-none focus:outline-none z-10 bg-transparent"
@@ -127,7 +130,23 @@ export default function RationaleModal() {
                 />
                 {!editorContent && (
                   <div className="absolute w-full h-full flex flex-col justify-center rounded-md p-8 text-center min-h-[300px] items-center">
-                    <div className="mb-4 bg-muted rounded-full p-3">
+                    {pdfFile ? (
+                    <div className="space-y-2">
+                      <p className="font-medium">{pdfFile.name}</p>
+                      <p className="text-sm text-muted-foreground">{(pdfFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setPdfFile(null)
+                          setPdfUrl(null)
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ):(<>
+                  <div className="mb-4 bg-muted rounded-full p-3">
                       <Upload className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <p className="text-primary font-medium mb-1">Upload file</p>
@@ -147,7 +166,9 @@ export default function RationaleModal() {
                       className="hidden"
                       accept="application/pdf"
                       onChange={handleFileChange}
-                    />
+                      />
+                      </>
+                      )}
                   </div>
                 )}
               </div>
