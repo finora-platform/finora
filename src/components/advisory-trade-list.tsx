@@ -1,0 +1,216 @@
+"use client"
+
+import type React from "react"
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { AlertCircle, CheckCircle } from "lucide-react"
+import { createClerkSupabaseClient } from "@/utils/supabaseClient"
+import { useSession } from "@clerk/nextjs"
+import { AdvisoryTradeCard } from "@/components/advisory-tradecard"
+import { NewTradeForm } from "@/components/new-trade-form"
+import { formatDate } from "@/utils/format"
+import type { AdvisoryTradeListProps, Trade } from "@/types/trade-types"
+
+export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
+  segmentFilter = "all",
+  statusFilter = "all",
+  clientId,
+}) => {
+  const [trades, setTrades] = useState<Trade[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showNewTradeForm, setShowNewTradeForm] = useState(false)
+  const { isLoaded, session } = useSession()
+
+  useEffect(() => {
+    if (isLoaded && session) {
+      fetchTrades()
+    }
+  }, [isLoaded, session, segmentFilter, statusFilter, clientId])
+
+  const fetchTrades = async () => {
+    setLoading(true)
+    try {
+      const supabase = await createClerkSupabaseClient(session)
+
+      // First fetch the rows
+      let query = supabase.from("user_trades").select("*")
+
+      // If clientId is provided, filter by it
+      if (clientId) {
+        query = query.eq("user_id", clientId)
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("Error fetching trades:", error)
+        setLoading(false)
+        return
+      }
+
+      if (!data || data.length === 0) {
+        setTrades([])
+        setLoading(false)
+        return
+      }
+
+      // Process the trade data
+      let processedTrades: Trade[] = data.map((trade) => ({
+        ...trade,
+        trade_data: {
+          ...trade.trade_data,
+          // Ensure the targets is always an array
+          targets: Array.isArray(trade.trade_data.targets)
+            ? trade.trade_data.targets
+            : trade.trade_data.targets
+              ? [trade.trade_data.targets]
+              : [],
+        },
+      }))
+
+      // Apply filters client-side
+      if (segmentFilter !== "all") {
+        processedTrades = processedTrades.filter((trade) => trade.trade_data.segment === segmentFilter)
+      }
+
+      if (statusFilter !== "all") {
+        processedTrades = processedTrades.filter((trade) => trade.trade_data.status === statusFilter)
+      }
+
+      setTrades(processedTrades)
+    } catch (error) {
+      console.error("Error in fetchTrades:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleTradeUpdate = async (updatedTrade: Trade) => {
+    try {
+      const supabase = await createClerkSupabaseClient(session)
+
+      const { data, error } = await supabase
+        .from("user_trades")
+        .update({ trade_data: updatedTrade.trade_data })
+        .eq("id", updatedTrade.id)
+        .select()
+
+      if (error) throw error
+
+      // Update trades in local state
+      setTrades(trades.map((t) => (t.id === updatedTrade.id ? data[0] : t)))
+      return Promise.resolve()
+    } catch (error) {
+      console.error("Error updating trade:", error)
+      return Promise.reject(error)
+    }
+  }
+
+  const handleTradeExit = async (tradeId: number, exitData: any) => {
+    try {
+      const supabase = await createClerkSupabaseClient(session)
+
+      // Find the trade to update
+      const tradeToUpdate = trades.find((trade) => trade.id === tradeId)
+
+      if (!tradeToUpdate) {
+        throw new Error("Trade not found")
+      }
+
+      // Update the trade data
+      const updatedTradeData = {
+        ...tradeToUpdate.trade_data,
+        status: "EXITED",
+        exitPrice: exitData.exitPrice,
+        exitDate: exitData.exitDate,
+        exitReason: exitData.exitReason,
+        pnl: exitData.pnl,
+        updatedAt: new Date().toISOString(),
+      }
+
+      const { error } = await supabase.from("user_trades").update({ trade_data: updatedTradeData }).eq("id", tradeId)
+
+      if (error) {
+        throw error
+      }
+
+      // Update local state
+      setTrades(trades.map((trade) => (trade.id === tradeId ? { ...trade, trade_data: updatedTradeData } : trade)))
+
+      return Promise.resolve()
+    } catch (error) {
+      console.error("Error exiting trade:", error)
+      return Promise.reject(error)
+    }
+  }
+
+  return (
+    <div className="w-full">
+      {/* Action Button */}
+      {clientId && (
+        <div className="flex justify-end mb-4">
+          <Button
+            onClick={() => setShowNewTradeForm(!showNewTradeForm)}
+            className={`${showNewTradeForm ? "bg-gray-600" : "bg-purple-600"} text-white`}
+          >
+            {showNewTradeForm ? "Cancel" : "Create New Trade"}
+          </Button>
+        </div>
+      )}
+
+      {/* New Trade Form */}
+      {showNewTradeForm && clientId && (
+        <NewTradeForm
+          clientId={clientId}
+          onTradeCreated={() => {
+            setShowNewTradeForm(false)
+            fetchTrades()
+          }}
+        />
+      )}
+
+      {/* Trades List */}
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <p>Loading trades...</p>
+        </div>
+      ) : trades.length === 0 ? (
+        <div className="flex flex-col justify-center items-center h-40 bg-gray-50 rounded-lg border p-6">
+          <AlertCircle className="h-10 w-10 text-gray-400 mb-2" />
+          <p className="text-gray-600">No trades found</p>
+          {clientId && (
+            <Button variant="outline" className="mt-4" onClick={() => setShowNewTradeForm(true)}>
+              Create First Trade
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-gray-700">
+              {trades.length} {trades.length === 1 ? "Trade" : "Trades"} Found
+            </h3>
+            <Badge variant="outline" className="flex items-center gap-1">
+              <CheckCircle className="h-3 w-3" />
+              Last updated: {formatDate(new Date().toISOString())}
+            </Badge>
+          </div>
+
+          {trades.map((trade, index) => (
+            <AdvisoryTradeCard
+              key={trade.id}
+              trade={trade}
+              isLast={index === trades.length - 1}
+              onTradeUpdate={handleTradeUpdate}
+              onTradeExit={handleTradeExit}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default AdvisoryTradeList
