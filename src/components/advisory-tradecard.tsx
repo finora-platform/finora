@@ -3,37 +3,26 @@
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Edit, X } from "lucide-react"
+import { Edit, X, User } from "lucide-react"
 import { formatDate, formatTime } from "@/utils/format"
 import type { Trade, TradeCardProps, ExitData } from "@/types/trade-types"
-import RationaleModal  from "../app/dashboard/advisory/components/rationale-modal"
+import RationaleModal from "../app/dashboard/advisory/components/rationale-modal"
+import { EditTradeModal } from "./edit-trade-modal"
+import { ExitTradeModal } from "./exit-trade-modal"
 
-export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit }: TradeCardProps) => {
+export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit, clientId, clientName }: TradeCardProps) => {
     const [isExpanded, setIsExpanded] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [isExiting, setIsExiting] = useState(false)
-    const [editedTrade, setEditedTrade] = useState<Trade>(trade)
-    const [exitData, setExitData] = useState<ExitData>({
-        exitPrice: "",
-        exitReason: "",
-        pnl: "",
-    })
 
-    const tradeData = trade.trade_data
+    const tradeData = trade
 
-    const handleEditSubmit = async () => {
+    const handleEditSubmit = async (updatedTrade: Trade) => {
         try {
             await onTradeUpdate({
-                ...editedTrade,
-                trade_data: {
-                    ...editedTrade.trade_data,
-                    updatedAt: new Date().toISOString(),
-                },
+                ...updatedTrade,
+                updatedAt: new Date().toISOString(),
             })
             setIsEditing(false)
             console.log("Trade updated successfully.")
@@ -42,7 +31,7 @@ export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit }:
         }
     }
 
-    const handleExitSubmit = async () => {
+    const handleExitSubmit = async (exitData: ExitData) => {
         try {
             await onTradeExit(trade.id, {
                 ...exitData,
@@ -54,17 +43,6 @@ export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit }:
         }
     }
 
-    const handleEditChange = (field: string, value: any) => {
-        setEditedTrade({
-            ...editedTrade,
-            trade_data: {
-                ...editedTrade.trade_data,
-                [field]: value,
-                updatedAt: new Date().toISOString(),
-            },
-        })
-    }
-
     return (
         <div className={`p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition ${isLast ? "" : "mb-4"}`}>
             {/* Top Section */}
@@ -74,9 +52,13 @@ export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit }:
                     <span className={`font-semibold ${tradeData?.tradeType === "BUY" ? "text-green-600" : "text-red-600"}`}>
                         {tradeData?.tradeType || "N/A"}
                     </span>
-                                                        {/* <div onClick={(e) => { e.stopPropagation(); }}><RationaleModal /></div> */}
-
                     <span className="text-gray-500">{tradeData?.stock || "Unknown Stock"}</span>
+                    {clientName && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            {clientName}
+                        </Badge>
+                    )}
                     {tradeData?.segment && <Badge variant="outline">{tradeData.segment}</Badge>}
                     {tradeData?.timeHorizon && <Badge variant="outline">{tradeData.timeHorizon}</Badge>}
                     {tradeData?.status && (
@@ -95,11 +77,10 @@ export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit }:
                 </div>
                 <div onClick={(e) => { e.stopPropagation(); }}><RationaleModal /></div>
 
-
                 {/* Right Section (Date & Time) */}
                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span>📅 {formatDate(trade.created_at)}</span>
-                    <span>⏰ {formatTime(trade.created_at)}</span>
+                    <span>📅 {formatDate(trade.created_at || trade.createdAt)}</span>
+                    <span>⏰ {formatTime(trade.created_at || trade.createdAt)}</span>
                 </div>
             </div>
 
@@ -113,6 +94,12 @@ export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit }:
                                 {tradeData?.tradeType || "N/A"}
                             </Badge>
                             <span className="font-bold text-lg">{tradeData?.stock || "Unknown Stock"}</span>
+                            {clientName && (
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                    <User className="h-3 w-3" />
+                                    {clientName}
+                                </Badge>
+                            )}
                             {tradeData?.segment && <Badge variant="outline">{tradeData.segment}</Badge>}
                             {tradeData?.status && (
                                 <Badge
@@ -155,10 +142,25 @@ export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit }:
                                     </Button>
                                 </>
                             )}
-
                         </div>
                     </div>
 
+                    {/* Client Info Section */}
+                    {clientName && (
+                        <div className="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded-md">
+                            <User className="h-4 w-4 text-gray-500" />
+                            <span className="font-medium">Client:</span>
+                            <span>{clientName}</span>
+                            {clientId && (
+                                <Badge variant="secondary" className="ml-2">
+                                    ID: {clientId}
+                                </Badge>
+                            )}
+                        </div>
+                    )}
+
+
+                    {/* Rest of your existing expanded section content remains the same */}
                     {/* Entry, Stoploss, and Targets */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3 text-sm text-gray-700">
                         <div>
@@ -216,7 +218,7 @@ export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit }:
                     {/* Date & Debug Info */}
                     <div className="mt-4 text-zinc-800 text-sm">
                         <p>
-                            <strong>📩 Created At:</strong> {formatDate(trade.created_at)} at {formatTime(trade.created_at)}
+                            <strong>📩 Created At:</strong> {formatDate(trade.created_at || trade.createdAt)} at {formatTime(trade.created_at || trade.createdAt)}
                         </p>
                         {tradeData.updatedAt && (
                             <p>
@@ -233,149 +235,25 @@ export const AdvisoryTradeCard = ({ trade, isLast, onTradeUpdate, onTradeExit }:
                 </div>
             )}
 
-            {/* Edit Trade Dialog */}
-            <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                        <DialogTitle>Edit Trade: {tradeData.stock}</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="entry">Entry Price</Label>
-                                <Input
-                                    id="entry"
-                                    value={editedTrade.trade_data.entry}
-                                    onChange={(e) => handleEditChange("entry", e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="stoploss">Stop Loss</Label>
-                                <Input
-                                    id="stoploss"
-                                    value={editedTrade.trade_data.stoploss}
-                                    onChange={(e) => handleEditChange("stoploss", e.target.value)}
-                                />
-                            </div>
-                        </div>
+            {/* Edit Trade Modal */}
 
-                        <div className="space-y-2">
-                            <Label htmlFor="targets">Targets (comma separated)</Label>
-                            <Input
-                                id="targets"
-                                value={editedTrade.trade_data.targets.join(", ")}
-                                onChange={(e) =>
-                                    handleEditChange(
-                                        "targets",
-                                        e.target.value.split(",").map((t) => t.trim()),
-                                    )
-                                }
-                            />
-                        </div>
+            {/* // In parent component (AdvisoryTradeCard) */}
+            <EditTradeModal
+                trade={trade}
+                isOpen={isEditing}
+                onOpenChange={setIsEditing}
+                onSave={handleEditSubmit}
+                clientId={trade.userId} 
+                
+            />
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="segment">Segment</Label>
-                                <Select
-                                    value={editedTrade.trade_data.segment}
-                                    onValueChange={(value) => handleEditChange("segment", value)}
-                                >
-                                    <SelectTrigger id="segment">
-                                        <SelectValue placeholder="Select segment" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="EQUITY">Equity</SelectItem>
-                                        <SelectItem value="F&O">F&O</SelectItem>
-                                        <SelectItem value="COMMODITIES">Commodities</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="timeHorizon">Time Horizon</Label>
-                                <Select
-                                    value={editedTrade.trade_data.timeHorizon}
-                                    onValueChange={(value) => handleEditChange("timeHorizon", value)}
-                                >
-                                    <SelectTrigger id="timeHorizon">
-                                        <SelectValue placeholder="Select time horizon" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="INTRADAY">Intraday</SelectItem>
-                                        <SelectItem value="SWING">Swing</SelectItem>
-                                        <SelectItem value="LONGTERM">Long Term</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        {/* Added field for rationale */}
-                        <div className="space-y-2">
-                            <Label htmlFor="rationale">Trade Rationale</Label>
-                            <Textarea
-                                id="rationale"
-                                value={editedTrade.trade_data.rationale || ""}
-                                onChange={(e) => handleEditChange("rationale", e.target.value)}
-                                placeholder="Explain the reasoning behind this trade"
-                                rows={3}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setIsEditing(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleEditSubmit}>Save Changes</Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Exit Trade Dialog */}
-            <Dialog open={isExiting} onOpenChange={setIsExiting}>
-                <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                        <DialogTitle>Exit Trade: {tradeData.stock}</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="exitPrice">Exit Price</Label>
-                            <Input
-                                id="exitPrice"
-                                value={exitData.exitPrice}
-                                onChange={(e) => setExitData({ ...exitData, exitPrice: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="pnl">P&L (include + or - sign)</Label>
-                            <Input
-                                id="pnl"
-                                value={exitData.pnl}
-                                onChange={(e) => setExitData({ ...exitData, pnl: e.target.value })}
-                                placeholder="e.g. +10.5% or -5.2%"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="exitReason">Exit Reason</Label>
-                            <Textarea
-                                id="exitReason"
-                                value={exitData.exitReason}
-                                onChange={(e) => setExitData({ ...exitData, exitReason: e.target.value })}
-                                placeholder="Why are you exiting this trade?"
-                                rows={3}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setIsExiting(false)}>
-                            Cancel
-                        </Button>
-                        <Button variant="destructive" onClick={handleExitSubmit}>
-                            Exit Trade
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            {/* Exit Trade Modal */}
+            <ExitTradeModal
+                trade={trade}
+                isOpen={isExiting}
+                onOpenChange={setIsExiting}
+                onExit={handleExitSubmit}
+            />
         </div>
     )
 }

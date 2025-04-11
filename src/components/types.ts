@@ -28,6 +28,8 @@ export interface Trade {
     isLast: boolean
     onTradeUpdate: (updatedTrade: Trade) => Promise<void>
     onTradeExit: (tradeId: number, exitData: any) => Promise<void>
+    clientId: string
+    advisorId?: string
   }
   
   export interface NewTradeFormProps {
