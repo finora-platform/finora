@@ -21,7 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Tiptap from "./tiptap";
+import Toolbar from "./toolbar";
 
 export default function RationaleModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,6 +32,7 @@ export default function RationaleModal() {
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState("editor");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editorInstance, setEditorInstance] = useState<any>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,32 +76,7 @@ export default function RationaleModal() {
     }
   };
 
-  const formatText = (format: string) => {
-    // Simple formatting implementation
-    // In a real app, you'd use a rich text editor library
-    switch (format) {
-      case "bold":
-        setEditorContent(editorContent + "**bold text**");
-        break;
-      case "italic":
-        setEditorContent(editorContent + "*italic text*");
-        break;
-      case "heading":
-        setEditorContent(editorContent + "\n# Heading\n");
-        break;
-      case "quote":
-        setEditorContent(editorContent + "\n> Quote\n");
-        break;
-      case "list":
-        setEditorContent(editorContent + "\n- List item\n- List item\n");
-        break;
-      case "ordered-list":
-        setEditorContent(editorContent + "\n1. List item\n2. List item\n");
-        break;
-      default:
-        break;
-    }
-  };
+  const showUpload = editorContent === '<p></p>' || editorContent === '';
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -122,13 +99,18 @@ export default function RationaleModal() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}>
               <div className="relative h-full">
-                <textarea
+                <Tiptap 
+                    value={editorContent}
+                    onChange={setEditorContent}
+                    setEditorInstance={setEditorInstance}
+                  />
+                {/* <textarea
                   className="absolute w-full h-full resize-none focus:outline-none z-10 bg-transparent"
                   placeholder="Start typing"
                   value={editorContent}
                   onChange={(e) => setEditorContent(e.target.value)}
-                />
-                {!editorContent && (
+                /> */}
+                {showUpload && (
                   <div className="absolute w-full h-full flex flex-col justify-center rounded-md p-8 text-center min-h-[300px] items-center">
                     {pdfFile ? (
                     <div className="space-y-2">
@@ -176,48 +158,7 @@ export default function RationaleModal() {
 
             <div className="flex justify-between pt-2 border-t items-center">
               <div className="flex items-center gap-2 pt-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("bold")}
-                >
-                  <Bold className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("italic")}
-                >
-                  <Italic className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("heading")}
-                >
-                  <Heading className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("quote")}
-                >
-                  <Quote className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("ordered-list")}
-                >
-                  <ListOrdered className="h-4 w-4" />
-                </Button>
+              {editorInstance && <Toolbar editor={editorInstance} />}
               </div>
               <Button onClick={handleSend}>
                 <Send className="h-4 w-4 mr-2" />
