@@ -15,6 +15,7 @@ export const TradeList = ({ segmentFilter, statusFilter }: TradeListProps) => {
   const [error, setError] = useState<string | null>(null); // optional error state
 
   useEffect(() => {
+
     const fetchMyAdvisories = async () => {
         setLoading(true);
         setError(null);

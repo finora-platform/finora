@@ -7,7 +7,7 @@ import { Phone, Mail, X } from "lucide-react";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
 import { useSession } from "@clerk/nextjs";
 
-// Utility functions moved outside the component
+// Utility functions remain the same
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", {
@@ -25,49 +25,7 @@ const formatTime = (dateString: string) => {
   });
 };
 
-// Updated Trade interface to match the actual data structure
-interface TradeData {
-  stock: string;
-  tradeType: "BUY" | "SELL";
-  segment: "EQUITY" | "F&O" | "COMMODITIES";
-  timeHorizon: "INTRADAY" | "SWING" | "LONGTERM";
-  entry: string;
-  stoploss: string;
-  targets: string[];
-  status: "ACTIVE" | "COMPLETED";
-  createdAt: string;
-  rowId?: number;
-  advisorId?: string;
-}
-
-interface Trade {
-  id?: number; // Optional because we're generating it
-  rowId?: number;
-  advisorId?: string;
-  stock: string;
-  tradeType: "BUY" | "SELL";
-  segment: "EQUITY" | "F&O" | "COMMODITIES";
-  timeHorizon: "INTRADAY" | "SWING" | "LONGTERM";
-  entry: string;
-  stoploss: string;
-  targets: string[];
-  status: "ACTIVE" | "COMPLETED";
-  createdAt: string;
-}
-
-interface Client {
-  id: number;
-  name: string;
-  plan: "elite" | "premium" | "standard";
-  risk: "aggressive" | "hard" | "conservative";
-}
-
-interface ClientSidePanelProps {
-  client: Client;
-  onClose: () => void;
-}
-
-// Updated TradeCard component
+// TradeCard component remains the same
 export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -143,14 +101,6 @@ export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) 
             <p>
               <strong>⏰ Time:</strong> {formatTime(trade.createdAt)}
             </p>
-
-            {/* Debug JSON Output */}
-            <details className="mt-3 bg-gray-100 p-2 rounded-md">
-              <summary className="cursor-pointer text-gray-700 font-medium">🔍 View Raw Trade JSON</summary>
-              <pre className="text-xs mt-2 text-gray-600 overflow-x-auto">
-                {JSON.stringify(trade, null, 2)}
-              </pre>
-            </details>
           </div>
         </div>
       )}
@@ -159,70 +109,60 @@ export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) 
 };
 
 const ClientSidePanel: React.FC<ClientSidePanelProps> = ({ client, onClose }) => {
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [latestTrade, setLatestTrade] = useState<Trade | null>(null);
   const [loading, setLoading] = useState(true);
-  const [segmentFilter, setSegmentFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const { session } = useSession();
 
   useEffect(() => {
-    const fetchTrades = async () => {
+    const fetchLatestTrade = async () => {
       const supabase = await createClerkSupabaseClient(session);
       setLoading(true);
       
-      // First, fetch all trade data for this user
-      const { data, error } = await supabase
-        .from("user_trades")
-        .select("*")
-        .eq("user_id", client.id);
+      try {
+        // First, fetch all trade data for this user
+        const { data, error } = await supabase
+          .from("user_trades")
+          .select("*")
+          .eq("user_id", client.id)
+          .order("created_at", { ascending: false }); // Get most recent first
         
-      if (error) {
-        console.error("Error fetching trades:", error);
-        setLoading(false);
-        return;
-      }
-      
-      if (!data || data.length === 0) {
-        setTrades([]);
-        setLoading(false);
-        return;
-      }
-      
-      // Extract and process the trade data from the JSON array
-      let allTrades: Trade[] = [];
-      
-      data.forEach((row, index) => {
-        // Each row contains an array of trade objects
-        if (row.trade_data && Array.isArray(row.trade_data)) {
-          // Map each trade to include the row ID for reference
-          const tradesWithId = row.trade_data.map((tradeData: TradeData, tradeIndex: number) => ({
-            id: index * 1000 + tradeIndex, // Generate a unique ID for each trade
-            rowId: row.id, // Keep the database row ID for updates
-            advisorId: row.advisor_id,
-            ...tradeData
-          }));
-          
-          allTrades = [...allTrades, ...tradesWithId];
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+          setLatestTrade(null);
+          return;
         }
-      });
-      
-      // Apply filters
-      let filteredTrades = allTrades;
-      
-      if (segmentFilter !== "all") {
-        filteredTrades = filteredTrades.filter(trade => trade.segment === segmentFilter);
+        
+        // Find the most recent trade across all trade_data arrays
+        let mostRecentTrade: Trade | null = null;
+        let mostRecentDate = new Date(0); // Earliest possible date
+        
+        data.forEach(row => {
+          if (row.trade_data && Array.isArray(row.trade_data)) {
+            row.trade_data.forEach((tradeData: TradeData) => {
+              const tradeDate = new Date(tradeData.createdAt);
+              if (tradeDate > mostRecentDate) {
+                mostRecentDate = tradeDate;
+                mostRecentTrade = {
+                  ...tradeData,
+                  id: row.id, // Use the row ID as reference
+                  advisorId: row.advisor_id
+                };
+              }
+            });
+          }
+        });
+        
+        setLatestTrade(mostRecentTrade);
+      } catch (error) {
+        console.error("Error fetching latest trade:", error);
+      } finally {
+        setLoading(false);
       }
-      
-      if (statusFilter !== "all") {
-        filteredTrades = filteredTrades.filter(trade => trade.status === statusFilter);
-      }
-      
-      setTrades(filteredTrades);
-      setLoading(false);
     };
 
-    fetchTrades();
-  }, [client.id, segmentFilter, statusFilter, session]);
+    fetchLatestTrade();
+  }, [client.id, session]);
 
   return (
     <div className="fixed right-0 top-0 h-full w-108 bg-white shadow-lg p-6 border-l overflow-y-auto">
@@ -254,59 +194,22 @@ const ClientSidePanel: React.FC<ClientSidePanelProps> = ({ client, onClose }) =>
         </TabsList>
       </Tabs>
 
-      {/* Filters */}
-      <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <Select value={segmentFilter} onValueChange={setSegmentFilter}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="All Segments" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Segments</SelectItem>
-                <SelectItem value="EQUITY">Equity</SelectItem>
-                <SelectItem value="F&O">Futures & Options</SelectItem>
-                <SelectItem value="COMMODITIES">Commodities</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Latest Trade Section */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-4">Latest Trade</h3>
+        
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <p>Loading latest trade...</p>
           </div>
-
-          <div className="flex-1 min-w-[200px]">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-              </SelectContent>
-            </Select>
+        ) : latestTrade ? (
+          <TradeCard trade={latestTrade} isLast={true} />
+        ) : (
+          <div className="flex justify-center items-center h-40 border rounded-lg bg-gray-50">
+            <p>No trades found for this client</p>
           </div>
-        </div>
-
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          Post Trade
-        </button>
+        )}
       </div>
-
-      {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <p>Loading trades...</p>
-        </div>
-      ) : trades.length === 0 ? (
-        <div className="flex justify-center items-center h-40">
-          <p>No trades found for this client</p>
-        </div>
-      ) : (
-        trades.map((trade, index) => (
-          <TradeCard 
-            key={trade.id || index} 
-            trade={trade} 
-            isLast={index === trades.length - 1}
-          />
-        ))
-      )}
 
       {/* Action Buttons */}
       <div className="flex justify-between mt-4">
