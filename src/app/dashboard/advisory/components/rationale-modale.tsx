@@ -21,7 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Tiptap from "./tiptap";
+import Toolbar from "./toolbar";
 
 export default function RationaleModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,6 +32,7 @@ export default function RationaleModal() {
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState("editor");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editorInstance, setEditorInstance] = useState<any>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,60 +76,59 @@ export default function RationaleModal() {
     }
   };
 
-  const formatText = (format: string) => {
-    // Simple formatting implementation
-    // In a real app, you'd use a rich text editor library
-    switch (format) {
-      case "bold":
-        setEditorContent(editorContent + "**bold text**");
-        break;
-      case "italic":
-        setEditorContent(editorContent + "*italic text*");
-        break;
-      case "heading":
-        setEditorContent(editorContent + "\n# Heading\n");
-        break;
-      case "quote":
-        setEditorContent(editorContent + "\n> Quote\n");
-        break;
-      case "list":
-        setEditorContent(editorContent + "\n- List item\n- List item\n");
-        break;
-      case "ordered-list":
-        setEditorContent(editorContent + "\n1. List item\n2. List item\n");
-        break;
-      default:
-        break;
-    }
-  };
+  const showUpload = editorContent === '<p></p>' || editorContent === '';
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
+          variant="ghost"
           className="text-orange-500 bg-white shadow-none hover:bg-white"
           onClick={() => setIsOpen(true)}
         >
           Open Rationale
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[80vw] max-w-[80vw] h-[80vh] max-h-[80vh] overflow-auto">
+      <DialogContent className="w-[80vw] max-w-none h-[80vh] max-h-[80vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="sr-only">Rationale Editor</DialogTitle>
         </DialogHeader>
         {!showPreview ? (
           <>
-            <div className="border rounded-md p-4 min-h-[300px] h-[66vh]">
+            <div className="border rounded-md p-4 min-h-[300px] h-[66vh]"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}>
               <div className="relative h-full">
-                <textarea
+                <Tiptap 
+                    value={editorContent}
+                    onChange={setEditorContent}
+                    setEditorInstance={setEditorInstance}
+                  />
+                {/* <textarea
                   className="absolute w-full h-full resize-none focus:outline-none z-10 bg-transparent"
                   placeholder="Start typing"
                   value={editorContent}
                   onChange={(e) => setEditorContent(e.target.value)}
-                />
-                {!editorContent && (
+                /> */}
+                {showUpload && (
                   <div className="absolute w-full h-full flex flex-col justify-center rounded-md p-8 text-center min-h-[300px] items-center">
-                    <div className="mb-4 bg-muted rounded-full p-3">
+                    {pdfFile ? (
+                    <div className="space-y-2">
+                      <p className="font-medium">{pdfFile.name}</p>
+                      <p className="text-sm text-muted-foreground">{(pdfFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setPdfFile(null)
+                          setPdfUrl(null)
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ):(<>
+                  <div className="mb-4 bg-muted rounded-full p-3">
                       <Upload className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <p className="text-primary font-medium mb-1">Upload file</p>
@@ -147,7 +148,9 @@ export default function RationaleModal() {
                       className="hidden"
                       accept="application/pdf"
                       onChange={handleFileChange}
-                    />
+                      />
+                      </>
+                      )}
                   </div>
                 )}
               </div>
@@ -155,48 +158,7 @@ export default function RationaleModal() {
 
             <div className="flex justify-between pt-2 border-t items-center">
               <div className="flex items-center gap-2 pt-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("bold")}
-                >
-                  <Bold className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("italic")}
-                >
-                  <Italic className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("heading")}
-                >
-                  <Heading className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("quote")}
-                >
-                  <Quote className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => formatText("ordered-list")}
-                >
-                  <ListOrdered className="h-4 w-4" />
-                </Button>
+              {editorInstance && <Toolbar editor={editorInstance} />}
               </div>
               <Button onClick={handleSend}>
                 <Send className="h-4 w-4 mr-2" />
