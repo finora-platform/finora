@@ -23,7 +23,7 @@ export default function Tiptap({
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      onChange(editor.getText());
     },
   });
 
@@ -46,7 +46,7 @@ export default function Tiptap({
   }, [editor]);
 
   return (
-    <div className="absolute w-full h-full resize-none focus:outline-none z-10 bg-transparent">
+    <div className="absolute w-full h-full resize-none focus:outline-none z-10 bg-transparent" onClick={() => editor.commands.focus()}>
       <EditorContent className="h-full" editor={editor} />
     </div>
   );
