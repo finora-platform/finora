@@ -215,9 +215,9 @@ export default function AdvisoryPage() {
             <TabsTrigger value="exited" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
               Exited
             </TabsTrigger>
-            <TabsTrigger value="all" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
+            {/* <TabsTrigger value="all" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
               All Trades
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
           
           <TabsContent value="active" className="mt-0">
