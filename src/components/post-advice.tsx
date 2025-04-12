@@ -195,9 +195,33 @@ export default function PostAdviceForm({
         createdAt: new Date().toISOString()
       };
   
-      const clientsToNotify = activeTab === "individual" 
-        ? [selectedClient!] 
-        : selectedClients;
+      // Get clients to notify based on active tab
+      let clientsToNotify: ClientType[] = [];
+      
+      if (activeTab === "individual") {
+        if (selectedClient) {
+          clientsToNotify = [selectedClient];
+        }
+      } else if (activeTab === "plan") {
+        if (selectedPlan) {
+          // Fetch all clients associated with the selected plan
+          const { data: planClients, error } = await supabase
+            .from("plan_clients") // or whatever your join table is called
+            .select("client_id, clients(*)") // adjust based on your schema
+            .eq("plan_id", selectedPlan.id);
+          
+          if (error) throw error;
+          
+          clientsToNotify = planClients.map(pc => pc.clients);
+        } else if (selectedClients.length > 0) {
+          clientsToNotify = selectedClients;
+        }
+      }
+  
+      if (clientsToNotify.length === 0) {
+        alert("No clients selected or found for the plan");
+        return;
+      }
   
       const promises = clientsToNotify.map(async (client) => {
         // Fetch existing trade data
