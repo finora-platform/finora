@@ -32,24 +32,31 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
 
   const fetchClientNames = async () => {
     try {
-      const supabase = await createClerkSupabaseClient(session)
+      // Check if session exists
+      if (!session) {
+        console.error("No session available");
+        return;
+      }
+  
+      const supabase = await createClerkSupabaseClient(session);
+      const advisorId = session.user.id; // Get current advisor's ID
+  
       const { data, error } = await supabase
         .from("client3")
         .select("id, name")
-      
-      if (error) throw error
-
+  
+      if (error) throw error;
+  
       const namesMap = data.reduce((acc, client) => {
-        acc[client.id] = client.name
-        return acc
-      }, {} as Record<string, string>)
-
-      setClientNames(namesMap)
+        acc[client.id] = client.name;
+        return acc;
+      }, {} as Record<string, string>);
+  
+      setClientNames(namesMap);
     } catch (error) {
-      console.error("Error fetching client names:", error)
+      console.error("Error fetching client names:", error);
     }
-  }
-
+  };
   const fetchTrades = async () => {
     setLoading(true)
     try {

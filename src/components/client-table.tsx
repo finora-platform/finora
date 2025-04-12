@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from "react";
 import {
@@ -43,8 +44,8 @@ export default function ClientTable() {
   const { session, isLoaded } = useSession();
   const { user } = useUser();
 
-  const plans = ["Plan A", "Plan B", "Plan C"];
-  const riskProfiles = ["Low Risk", "Medium Risk", "High Risk"];
+  const plans = ["premium", "standard", "elite"];
+  const riskProfiles = ["conservative", "high", "aggressive"];
 
   useEffect(() => {
     if (isLoaded && session) {
@@ -81,37 +82,80 @@ export default function ClientTable() {
     }
   };
 
-  const fetchLatestTrades = async (client) => {
+  const fetchLatestTrades = async (client: SupabaseClient) => {
     try {
       // First get all user_trades for this advisor
       const { data: tradesData, error: tradesError } = await client
         .from('user_trades')
-        .select('*')
-        .eq('advisor_id', user.id.toString());
-
+        .select('user_id, trade_data')
+        .eq('advisor_id', user?.id);
+  
       if (tradesError) throw tradesError;
-
+      if (!tradesData) return;
+  
       // Process to get the latest trade for each client
       const latestTradesMap: Record<string, any> = {};
+  
+      tradesData.forEach(trade => {
+        try {
+          // Handle case where trade_data might be a string or array
+          let tradeData = trade.trade_data;
+          
+          // If it's a string, parse it as JSON
+          if (typeof tradeData === 'string') {
+            try {
+              tradeData = JSON.parse(tradeData);
+            } catch (e) {
+              console.warn('Failed to parse trade_data as JSON for user:', trade.user_id);
+              return;
+            }
+          }
+  
+          // Ensure we have an array at this point
+// Normalize tradeData to an array
+if (!Array.isArray(tradeData)) {
+  if (typeof tradeData === 'object' && tradeData !== null) {
+    tradeData = [tradeData]; // wrap single trade in an array
+  } else {
+    console.warn('Invalid trade_data format for user:', trade.user_id, tradeData);
+    return;
+  }
+}
 
-      tradesData?.forEach(trade => {
-        if (!trade.trade_data || trade.trade_data.length === 0) return;
-
-        // Get the most recent trade (assuming trade_data is sorted by createdAt)
-        const latestTrade = trade.trade_data.reduce((latest, current) => {
-          const currentDate = new Date(current.createdAt || 0);
-          const latestDate = new Date(latest.createdAt || 0);
-          return currentDate > latestDate ? current : latest;
-        });
-
-        if (trade.user_id) {
-          latestTradesMap[trade.user_id] = latestTrade;
+  
+          // Filter out invalid entries and ensure createdAt exists
+          const validTrades = tradeData.filter(t => 
+            t && 
+            typeof t === 'object' && 
+            t.createdAt && 
+            typeof t.createdAt === 'string'
+          );
+  
+          if (validTrades.length === 0) return;
+  
+          // Get the most recent trade by createdAt
+          const latestTrade = validTrades.reduce((latest, current) => {
+            try {
+              const currentDate = new Date(current.createdAt).getTime();
+              const latestDate = new Date(latest.createdAt).getTime();
+              return currentDate > latestDate ? current : latest;
+            } catch (e) {
+              return latest; // If date parsing fails, keep the previous latest
+            }
+          });
+  
+          if (trade.user_id) {
+            latestTradesMap[trade.user_id] = latestTrade;
+          }
+        } catch (err) {
+          console.error('Error processing trades for user:', trade.user_id, err);
         }
       });
-
+  
       setLatestTrades(latestTradesMap);
     } catch (err) {
       console.error('Error fetching latest trades:', err);
+      // Optionally set an error state here if you want to display it
     }
   };
 

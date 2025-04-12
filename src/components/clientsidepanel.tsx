@@ -6,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Phone, Mail, X } from "lucide-react";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
 import { useSession } from "@clerk/nextjs";
+import { Edit} from "lucide-react"
+// import { formatDate, formatTime } from "@/utils/format"
+import type { Trade } from "@/types/trade-types"
 
 // Utility functions moved outside the component
 const formatDate = (dateString: string) => {
@@ -68,96 +71,168 @@ interface ClientSidePanelProps {
 }
 
 // Updated TradeCard component
+
+
+
 export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
+
+  const isActiveTrade = trade.status === "ACTIVE"
 
   return (
-    <div
-      className={`p-4 border rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100 transition ${isLast ? "" : "mb-4"}`}
-      onClick={() => setIsExpanded(!isExpanded)}
-    >
+    <div className={`p-4 border rounded-lg bg-white hover:bg-gray-50 transition ${isLast ? "" : "mb-4"}`}>
       {/* Top Section */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         {/* Left Section (Type & Name) */}
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className={`font-semibold ${trade.tradeType === "BUY" ? "text-green-600" : "text-red-600"}`}>
+          <span
+            className={`font-semibold flex items-center ${trade.tradeType === "BUY" ? "text-green-600" : "text-red-600"}`}
+          >
+            <span className="h-2 w-2 rounded-full mr-1 inline-block bg-current"></span>
             {trade.tradeType || "N/A"}
           </span>
-          <span className="text-gray-500">{trade.stock || "Unknown Stock"}</span>
-          {trade.segment && <Badge variant="outline">{trade.segment}</Badge>}
-          {trade.timeHorizon && <Badge variant="outline">{trade.timeHorizon}</Badge>}
+          <span className="font-medium text-gray-800">{trade.stock || "Unknown Stock"}</span>
+          {trade.segment && (
+            <Badge variant="secondary" className="font-normal text-xs">
+              {trade.segment}
+            </Badge>
+          )}
+          {trade.timeHorizon && (
+            <Badge variant="outline" className="font-normal text-xs">
+              {trade.timeHorizon}
+            </Badge>
+          )}
+          {trade.status && (
+            <Badge
+              variant={
+                trade.status === "ACTIVE"
+                  ? "default"
+                  : trade.status === "COMPLETED"
+                    ? "secondary"
+                    : "destructive"
+              }
+            >
+              {trade.status}
+            </Badge>
+          )}
         </div>
 
-        {/* Right Section (Date & Time) */}
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span>📅 {formatDate(trade.createdAt)}</span>
-          <span>⏰ {formatTime(trade.createdAt)}</span>
+        {/* Right Section (Actions & Date) */}
+        <div className="flex items-center gap-2 text-sm">
+
+          <div className="text-gray-500 ml-2">
+            <span>📅 {formatDate(trade.createdAt)}</span>
+            <span className="ml-2">⏰ {formatTime(trade.createdAt)}</span>
+          </div>
         </div>
       </div>
 
       {/* Expanded Section */}
       {isExpanded && (
         <div className="mt-4 p-4 border-t bg-white rounded-md shadow-sm flex flex-col gap-4">
-          {/* Header Section */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Badge variant={trade.tradeType === "BUY" ? "success" : "destructive"}>
-                {trade.tradeType || "N/A"}
-              </Badge>
-              <span className="font-bold text-lg">{trade.stock || "Unknown Stock"}</span>
-              {trade.segment && <Badge variant="outline">{trade.segment}</Badge>}
-              {trade.status && (
-                <Badge variant={trade.status === "ACTIVE" ? "default" : "secondary"}>
-                  {trade.status}
-                </Badge>
-              )}
-            </div>
-            <button className="text-orange-500 text-sm border px-2 py-1 rounded-md hover:bg-orange-50 hover:text-orange-700 transition">
-              ⚠️ Generate rationale
-            </button>
-          </div>
-
           {/* Entry, Stoploss, and Targets */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3 text-sm text-gray-700">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm text-gray-700">
             <div>
-              <p className="flex items-center gap-1 font-medium">⏳ Entry</p>
-              <span className="text-gray-900 font-semibold">{trade.entry ?? "—"}</span>
+              <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 5v14M18 13l-6 6M6 13l6 6" />
+                </svg>
+                Entry
+              </p>
+              <span className="text-gray-900 font-medium">{trade.entry ?? "—"}</span>
             </div>
             <div>
-              <p className="flex items-center gap-1 font-medium">🚫 Stoploss</p>
-              <span className="text-gray-900 font-semibold">{trade.stoploss ?? "—"}</span>
+              <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M4.93 4.93l14.14 14.14" />
+                </svg>
+                Stoploss
+              </p>
+              <span className="text-gray-900 font-medium">{trade.stoploss ?? "—"}</span>
             </div>
             <div>
-              <p className="flex items-center gap-1 font-medium">🚩 Target(s)</p>
-              <span className="text-gray-900 font-semibold">
-                {trade.targets?.length > 0 ? trade.targets.join(" » ") : "No targets"}
+              <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                  <line x1="4" y1="22" x2="4" y2="15" />
+                </svg>
+                Exited
+              </p>
+              <span className="text-gray-900 font-medium">
+                {trade.exitPrice}
               </span>
             </div>
+            <div>
+              <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 22V2M17 7l-5-5M7 7l5-5M2 12h20M7 17l5 5M17 17l-5 5" />
+                </svg>
+                Risk/Reward
+              </p>
+              <span className="text-gray-900 font-medium">{trade.riskReward ?? "—"}</span>
+            </div>
           </div>
 
-          {/* Date & Debug Info */}
-          <div className="mt-4 text-zinc-800 text-sm">
-            <p>
-              <strong>📩 Created At:</strong> {formatDate(trade.createdAt)}
-            </p>
-            <p>
-              <strong>⏰ Time:</strong> {formatTime(trade.createdAt)}
-            </p>
+  
 
-            {/* Debug JSON Output */}
-            <details className="mt-3 bg-gray-100 p-2 rounded-md">
-              <summary className="cursor-pointer text-gray-700 font-medium">🔍 View Raw Trade JSON</summary>
-              <pre className="text-xs mt-2 text-gray-600 overflow-x-auto">
-                {JSON.stringify(trade, null, 2)}
-              </pre>
-            </details>
+          {/* Date Info */}
+          <div className="mt-4 text-sm text-gray-600">
+            <p>Created: {formatDate(trade.createdAt)} at {formatTime(trade.createdAt)}</p>
+            {trade.updatedAt && (
+              <p>Updated: {formatDate(trade.updatedAt)} at {formatTime(trade.updatedAt)}</p>
+            )}
+            {trade.exitDate && (
+              <p>Exited: {formatDate(trade.exitDate)} at {formatTime(trade.exitDate)}</p>
+            )}
           </div>
         </div>
       )}
     </div>
-  );
-};
-
+  )
+}
 const ClientSidePanel: React.FC<ClientSidePanelProps> = ({ client, onClose }) => {
   const [latestClientTrades, setLatestClientTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -239,7 +314,8 @@ useEffect(() => {
 }, [client.id, session, segmentFilter, statusFilter]);
 
   return (
-    <div className="fixed right-0 top-0 h-full w-108 bg-white shadow-lg p-6 border-l overflow-y-auto">
+    <div className="fixed right-0 top-0 h-screen w-108 bg-white shadow-lg p-6 border-l overflow-y-auto border-gray-200 border-rounded-lg">
+      {/* Header */}
       {/* Header with Client Info & Close Button */}
       <div className="flex justify-between items-center mb-4">
         <div>
