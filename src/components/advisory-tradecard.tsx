@@ -1,14 +1,45 @@
 "use client"
 
 import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, X, User } from "lucide-react"
+import { Edit, X, Clock, User } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { formatDate, formatTime } from "@/utils/format"
-import type { Trade, TradeCardProps, ExitData } from "@/types/trade-types"
-import RationaleModal from "../app/dashboard/advisory/components/rationale-modal"
 import { EditTradeModal } from "./edit-trade-modal"
 import { ExitTradeModal } from "./exit-trade-modal"
+import { TimelineModal } from "./Timelinemodal"
+import RationaleModal from "@/app/dashboard/advisory/components/rationale-modal"
+
+interface TradeCardProps {
+  trade: Trade
+  isLast: boolean
+  onTradeUpdate: (trade: Trade) => Promise<void>
+  onTradeExit: (tradeId: string, exitData: ExitData) => Promise<void>
+  clientId: string
+  clientName: string
+}
+
+interface Trade {
+  id: string
+  userId: string
+  tradeType: string
+  stock: string
+  segment: string
+  timeHorizon: string
+  status: string
+  entry: number
+  stoploss: number
+  exitPrice?: number
+  riskReward?: number
+  rationale: string
+  createdAt: string
+  updatedAt?: string
+}
+
+interface ExitData {
+  exitPrice: number
+  exitDate: string
+}
 
 export const AdvisoryTradeCard = ({
   trade,
@@ -21,7 +52,7 @@ export const AdvisoryTradeCard = ({
   const [isExpanded, setIsExpanded] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
-
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false)
   const tradeData = trade
   const isActiveTrade = tradeData?.status === "ACTIVE"
 
@@ -98,7 +129,7 @@ export const AdvisoryTradeCard = ({
             e.stopPropagation()
           }}
         >
-          <RationaleModal />
+          <RationaleModal rationale={tradeData.rationale} />
         </div>
 
         {/* Right Section (Actions & Date) */}
@@ -129,9 +160,23 @@ export const AdvisoryTradeCard = ({
               </Button>
             </>
           )}
+
+          {/* Timeline button - available for all trade statuses */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-500 hover:text-purple-600 hover:bg-purple-50 p-1 h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsTimelineOpen(true)
+            }}
+          >
+            <Clock className="h-4 w-4" />
+          </Button>
+
           <div className="text-gray-500 ml-2">
-            <span>📅 {formatDate(trade.created_at || trade.createdAt)}</span>
-            <span className="ml-2">⏰ {formatTime(trade.created_at || trade.createdAt)}</span>
+            <span>📅 {formatDate(tradeData.createdAt || "")}</span>
+            <span className="ml-2">⏰ {formatTime(tradeData.createdAt || "")}</span>
           </div>
         </div>
       </div>
@@ -181,7 +226,6 @@ export const AdvisoryTradeCard = ({
               <span className="text-gray-900 font-medium">{tradeData?.stoploss ?? "—"}</span>
             </div>
 
-
             <div>
               <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
                 <svg
@@ -197,7 +241,7 @@ export const AdvisoryTradeCard = ({
                 >
                   <path d="M12 22V2M17 7l-5-5M7 7l5-5M2 12h20M7 17l5 5M17 17l-5 5" />
                 </svg>
-                Excited
+                Exit Price
               </p>
               <span className="text-gray-900 font-medium">{tradeData?.exitPrice ?? "—"}</span>
             </div>
@@ -221,8 +265,6 @@ export const AdvisoryTradeCard = ({
               </p>
               <span className="text-gray-900 font-medium">{tradeData?.riskReward ?? "—"}</span>
             </div>
-
- 
           </div>
 
           {/* Rationale section if available */}
@@ -235,7 +277,15 @@ export const AdvisoryTradeCard = ({
         </div>
       )}
 
-      {/* Edit Trade Modal */}
+      {/* Modals */}
+      <TimelineModal
+        isOpen={isTimelineOpen}
+        onOpenChange={setIsTimelineOpen}
+        stock={tradeData.stock}
+        userId={tradeData.userId}
+        tradeType={tradeData.tradeType}
+      />
+
       {isActiveTrade && (
         <EditTradeModal
           trade={trade}
@@ -246,7 +296,6 @@ export const AdvisoryTradeCard = ({
         />
       )}
 
-      {/* Exit Trade Modal */}
       {isActiveTrade && (
         <ExitTradeModal 
           trade={trade} 

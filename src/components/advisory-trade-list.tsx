@@ -11,7 +11,7 @@ import { AdvisoryTradeCard } from "@/components/advisory-tradecard"
 import { NewTradeForm } from "@/components/new-trade-form"
 import { formatDate } from "@/utils/format"
 import type { AdvisoryTradeListProps, Trade } from "@/types/trade-types"
-
+import {TimeLine} from "@/components/Timeline"
 export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
   segmentFilter = "all",
   statusFilter = "all",
@@ -145,6 +145,7 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
       setLoading(false)
     }
   }
+
 
   const handleTradeUpdate = async (updatedTrade: Trade) => {
     try {
@@ -300,6 +301,7 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
               onTradeExit={handleTradeExit}
               clientId={clientId}
               clientName={clientNames[trade.userId] || "Unknown Client"}
+              stock={trade.stock}
             />
           ))}
         </div>
