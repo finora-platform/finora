@@ -23,6 +23,7 @@ import { Client } from "../lib/types";
 import { useSession, useUser } from '@clerk/nextjs';
 import { createClerkSupabaseClient, SupabaseClient } from "@/utils/supabaseClient";
 
+
 export default function ClientTable() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
