@@ -19,8 +19,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import Tiptap from "./tiptap";
-import Toolbar from "./toolbar";
+import Tiptap from "@/components/tiptap";
+import Toolbar from "@/components/toolbar";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -77,7 +77,7 @@ export default function RationaleModal() {
     }
   };
 
-  const showUpload = editorContent === "<p></p>" || editorContent === "";
+  const showUpload = editorContent === "";
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -227,8 +227,17 @@ export default function RationaleModal() {
                     <p>Dear Sir/Madam,</p>
                   </div>
 
-                  <div className="mb-8 whitespace-pre-wrap">
-                    {editorContent}
+                  <div className="mb-8 whitespace-pre-wrap prose dark:prose-invert">
+                    {editorContent.split('\n').map((line, i) => {
+                      if (line.startsWith('### ')) return <h3 key={i}>{line.substring(4)}</h3>;
+                      if (line.startsWith('## ')) return <h2 key={i}>{line.substring(3)}</h2>;
+                      if (line.startsWith('# ')) return <h1 key={i}>{line.substring(2)}</h1>;
+                      if (line.startsWith('**') && line.endsWith('**')) return <strong key={i}>{line.slice(2,-2)}</strong>;
+                      if (line.startsWith('*') && line.endsWith('*') && !line.startsWith('* ') && !line.endsWith(' *')) 
+                        return <em key={i}>{line.slice(1,-1)}</em>;
+                      if (line.startsWith('~~') && line.endsWith('~~')) return <s key={i}>{line.slice(2,-2)}</s>;
+                      return <p key={i}>{line}</p>;
+                    })}
                   </div>
 
                   <div>

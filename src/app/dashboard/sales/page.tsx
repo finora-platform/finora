@@ -71,7 +71,6 @@ export default function Sales() {
   // Group leads by stage
   const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead")
   const calledStage = filteredLeads.filter((lead) => lead.stage === "called")
-  const trialStage = filteredLeads.filter((lead) => lead.stage === "trial")
   const subscribedStage = filteredLeads.filter((lead) => lead.stage === "subscribed")
   const onboardedStage = filteredLeads.filter((lead) => lead.stage === "onboarded")
 
@@ -126,10 +125,9 @@ export default function Sales() {
         </header>
 
         <div className="flex-1 overflow-auto p-4">
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-4 gap-8">
             <LeadStage title="Leads" leads={leadsStage} count={leadsStage.length} onLeadClick={handleLeadClick} />
             <LeadStage title="Called" leads={calledStage} count={calledStage.length} onLeadClick={handleLeadClick} />
-            <LeadStage title="On trial" leads={trialStage} count={trialStage.length} onLeadClick={handleLeadClick} />
             <LeadStage
               title="Subscribed"
               leads={subscribedStage}

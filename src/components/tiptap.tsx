@@ -5,7 +5,7 @@ import { useEffect } from "react";
 
 interface TiptapProps {
   value: string;
-  onChange: (richText: string) => void;
+  onChange: (html: string) => void;
   setEditorInstance?: (editor: any) => void;
 }
 
@@ -15,11 +15,30 @@ export default function Tiptap({
   setEditorInstance,
 }: TiptapProps) {
   const editor = useEditor({
-    extensions: [StarterKit.configure()],
-    content: value,
+    extensions: [StarterKit.configure({
+      paragraph: {
+        HTMLAttributes: {
+          class: 'paragraph',
+        },
+      },
+    })],
+    content: value || '',
     editorProps: {
       attributes: {
         class: "prose prose-sm m-0 focus:outline-none dark:prose-invert",
+      },
+      handleKeyDown: (view, event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          view.dispatch(
+            view.state.tr
+              .replaceSelectionWith(
+                view.state.schema.nodes.paragraph.create()
+              )
+              .scrollIntoView()
+          );
+          return true;
+        }
+        return false;
       },
     },
     onUpdate: ({ editor }) => {
@@ -34,14 +53,17 @@ export default function Tiptap({
   }, [editor]);
 
   useEffect(() => {
-    if (editor && !editor.isDestroyed && value !== editor.getHTML()) {
-      editor.commands.setContent(value);
+    if (editor && !editor.isDestroyed) {
+      const currentText = editor.getText();
+      if (value !== currentText) {
+        editor.commands.setContent(value || '');
+      }
     }
   }, [value, editor]);
 
   useEffect(() => {
     if (editor) {
-      editor.commands.focus(); // Focus the editor
+      editor.commands.focus();
     }
   }, [editor]);
 

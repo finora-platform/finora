@@ -28,7 +28,7 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
 
   return (
     <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={onClick}>
-      <CardContent className="p-4">
+      <CardContent className="p-6 pt-6">
         <div className="space-y-3">
           <div className="font-medium">{lead.name}</div>
 
