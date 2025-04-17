@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from "react";
 import {
@@ -22,6 +23,7 @@ import { Client } from "../lib/types";
 import { useSession, useUser } from '@clerk/nextjs';
 import { createClerkSupabaseClient, SupabaseClient } from "@/utils/supabaseClient";
 
+
 export default function ClientTable() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,13 +40,13 @@ export default function ClientTable() {
   const [existingClient, setExistingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
+  const [latestTrades, setLatestTrades] = useState<Record<string, any>>({});
 
   const { session, isLoaded } = useSession();
   const { user } = useUser();
 
-  const plans = ["Plan A", "Plan B", "Plan C"];
-  const riskProfiles = ["Low Risk", "Medium Risk", "High Risk"];
-  
+  const plans = ["premium", "standard", "elite"];
+  const riskProfiles = ["conservative", "high", "aggressive"];
 
   useEffect(() => {
     if (isLoaded && session) {
@@ -53,6 +55,7 @@ export default function ClientTable() {
         if (client) {
           setSupabaseClient(client);
           fetchClients(client);
+          fetchLatestTrades(client);
         }
       };
       initializeSupabaseClient();
@@ -80,6 +83,83 @@ export default function ClientTable() {
     }
   };
 
+  const fetchLatestTrades = async (client: SupabaseClient) => {
+    try {
+      // First get all user_trades for this advisor
+      const { data: tradesData, error: tradesError } = await client
+        .from('user_trades')
+        .select('user_id, trade_data')
+        .eq('advisor_id', user?.id);
+  
+      if (tradesError) throw tradesError;
+      if (!tradesData) return;
+  
+      // Process to get the latest trade for each client
+      const latestTradesMap: Record<string, any> = {};
+  
+      tradesData.forEach(trade => {
+        try {
+          // Handle case where trade_data might be a string or array
+          let tradeData = trade.trade_data;
+          
+          // If it's a string, parse it as JSON
+          if (typeof tradeData === 'string') {
+            try {
+              tradeData = JSON.parse(tradeData);
+            } catch (e) {
+              console.warn('Failed to parse trade_data as JSON for user:', trade.user_id);
+              return;
+            }
+          }
+  
+          // Ensure we have an array at this point
+// Normalize tradeData to an array
+if (!Array.isArray(tradeData)) {
+  if (typeof tradeData === 'object' && tradeData !== null) {
+    tradeData = [tradeData]; // wrap single trade in an array
+  } else {
+    console.warn('Invalid trade_data format for user:', trade.user_id, tradeData);
+    return;
+  }
+}
+
+  
+          // Filter out invalid entries and ensure createdAt exists
+          const validTrades = tradeData.filter(t => 
+            t && 
+            typeof t === 'object' && 
+            t.createdAt && 
+            typeof t.createdAt === 'string'
+          );
+  
+          if (validTrades.length === 0) return;
+  
+          // Get the most recent trade by createdAt
+          const latestTrade = validTrades.reduce((latest, current) => {
+            try {
+              const currentDate = new Date(current.createdAt).getTime();
+              const latestDate = new Date(latest.createdAt).getTime();
+              return currentDate > latestDate ? current : latest;
+            } catch (e) {
+              return latest; // If date parsing fails, keep the previous latest
+            }
+          });
+  
+          if (trade.user_id) {
+            latestTradesMap[trade.user_id] = latestTrade;
+          }
+        } catch (err) {
+          console.error('Error processing trades for user:', trade.user_id, err);
+        }
+      });
+  
+      setLatestTrades(latestTradesMap);
+    } catch (err) {
+      console.error('Error fetching latest trades:', err);
+      // Optionally set an error state here if you want to display it
+    }
+  };
+
   const handleDeleteClient = async (id: string) => {
     if (!supabaseClient) {
       setError('Supabase client is not initialized');
@@ -92,7 +172,7 @@ export default function ClientTable() {
       const { error } = await supabaseClient
         .from('client3')
         .delete()
-        .eq('id', id); // Ensure 'id' is the correct type stored in the database
+        .eq('id', id);
   
       if (error) throw error;
   
@@ -102,7 +182,6 @@ export default function ClientTable() {
       console.error('Error deleting client:', err);
     }
   };
-  
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -130,7 +209,7 @@ export default function ClientTable() {
       } else {
         const { data, error } = await supabaseClient
           .from('client3')
-  .insert([{ ...formData, user_id: String(user.id) }]);
+          .insert([{ ...formData, user_id: String(user.id) }]);
         if (error) throw error;
   
         await fetchClients(supabaseClient);
@@ -220,6 +299,7 @@ export default function ClientTable() {
                   <ClientTableRow
                     key={client.id}
                     client={client}
+                    latestTrade={latestTrades[client.id]}
                     handleEditClient={handleEditClient}
                     handleDeleteClient={handleDeleteClient}
                     setSelectedClient={setSelectedClient}
@@ -234,6 +314,7 @@ export default function ClientTable() {
       {selectedClient && (
         <ClientSidePanel
           client={selectedClient}
+          latestTrade={latestTrades[selectedClient.id]}
           onClose={() => setSelectedClient(null)}
         />
       )}
@@ -241,15 +322,15 @@ export default function ClientTable() {
       <Dialog open={showAddClientDialog} onOpenChange={setShowAddClientDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Add New Client</DialogTitle>
+            <DialogTitle>{existingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
             <DialogDescription>
-              Enter the client's details below
+              {existingClient ? "Update the client's details" : "Enter the client's details below"}
               <ClientForm
                 onSubmit={handleSubmit}
                 initialData={existingClient}
                 isLoading={isSubmitting}
                 onCancel={() => setShowAddClientDialog(false)}
-                mode="edit"
+                mode={existingClient ? "edit" : "create"}
               />
             </DialogDescription>
           </DialogHeader>

@@ -72,9 +72,17 @@ export const StockSearch = () => {
           { ticker: "HEROMOTOCO", name: "Hero MotoCorp Ltd" },
           { ticker: "ITC", name: "ITC Limited" },
           { ticker: "RELINFRA", name: "Reliance Infrastructure Ltd" },
-          { ticker: "RELICTEC", name: "Relic Technologies Ltd" },
-          { ticker: "RELIABVEN", name: "Reliable Ventures India Ltd" },
-          { ticker: "RELICHEM", name: "Reliance Chemotex Industries Ltd" }
+          {ticker: "TATAMOTORS", name: "Tata Motors Ltd" },
+          {ticker: "MARUTI", name: "Maruti Suzuki India Ltd"},
+          {ticker: "TATASTEEL", name: "Tata Steel Ltd"},
+          {ticker: "HINDALCO", name: "Hindalco Industries Ltd"},
+          {ticker: "ONGC", name: "Oil and Natural Gas Corporation Ltd"},
+          {ticker: "NTPC", name: "NTPC Limited"},
+          {ticker: "HDFCBANK", name: "HDFC Bank Ltd"},
+          {ticker: "ICICIBANK", name: "ICICI Bank Ltd"},
+          {ticker: "KOTAKBANK", name: "Kotak Mahindra Bank Ltd"},
+          {ticker: "AXISBANK", name: "Axis Bank Ltd"},
+          {ticker: "SBIN", name: "State Bank of India"},
         ]);
       }
     };
