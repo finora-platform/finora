@@ -18,7 +18,7 @@ const menuItems = [
   {
     title: "Website",
     icon: Globe,
-    href: "/dashboard/website",
+    href: "/landing",
   },
   {
     title: "Sales hub",

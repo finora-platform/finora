@@ -2,8 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, X } from "lucide-react";
-import PostAdviceForm  from "@/components/post-advice";
+import { ChevronDown } from "lucide-react";
 
 interface Stock {
   ticker: string;
@@ -44,42 +43,46 @@ export const StockSearch = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [tradeType, setTradeType] = useState<'BUY' | 'SELL'>('BUY');
-  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
-  const [showAdviceForm, setShowAdviceForm] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch stocks data
+  // Fetch stocks data from JSON server
   useEffect(() => {
     const fetchStocks = async () => {
       try {
         setIsLoading(true);
+        // Replace with your actual API endpoint
         const response = await fetch('http://localhost:3002/stocks');
         
-        if (!response.ok) throw new Error('Failed to fetch stocks data');
+        if (!response.ok) {
+          throw new Error('Failed to fetch stocks data');
+        }
         
         const data = await response.json();
         setStocks(data);
+        setIsLoading(false);
       } catch (err) {
         console.error('Error fetching stocks:', err);
-        setError('Failed to load stocks data. Using demo data.');
+        setError('Failed to load stocks data. Please try again later.');
+        setIsLoading(false);
+        
+        // Use dummy data for demonstration if API fails
         setStocks([
           { ticker: "RELIANCE", name: "Reliance Industries Ltd" },
           { ticker: "TATACHEM", name: "Tata Chemicals Ltd" },
           { ticker: "HEROMOTOCO", name: "Hero MotoCorp Ltd" },
           { ticker: "ITC", name: "ITC Limited" },
           { ticker: "RELINFRA", name: "Reliance Infrastructure Ltd" },
-          {ticker: "TATAMOTORS", name: "Tata Motors Ltd" },
-          {ticker: "MARUTI", name: "Maruti Suzuki India Ltd"},
+          { ticker: "RELICTEC", name: "Relic Technologies Ltd" },
+          { ticker: "RELIABVEN", name: "Reliable Ventures India Ltd" },
+          { ticker: "RELICHEM", name: "Reliance Chemotex Industries Ltd" }
         ]);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     fetchStocks();
   }, []);
 
-  // Filter stocks based on search query
+  // Filter stocks based on search query using Levenshtein distance
   useEffect(() => {
     if (query.trim() === '') {
       setFilteredStocks([]);
@@ -88,9 +91,20 @@ export const StockSearch = () => {
 
     const results = stocks
       .map(stock => {
-        const tickerDistance = levenshteinDistance(query.toLowerCase(), stock.ticker.toLowerCase());
-        const nameDistance = levenshteinDistance(query.toLowerCase(), stock.name.toLowerCase());
+        // Calculate distance for both ticker and name
+        const tickerDistance = levenshteinDistance(
+          query.toLowerCase(),
+          stock.ticker.toLowerCase()
+        );
+        const nameDistance = levenshteinDistance(
+          query.toLowerCase(),
+          stock.name.toLowerCase()
+        );
+        
+        // Use the smaller of the two distances
         const distance = Math.min(tickerDistance, nameDistance);
+        
+        // Check if the stock name or ticker starts with the query (for prioritizing)
         const startsWithQuery = 
           stock.ticker.toLowerCase().startsWith(query.toLowerCase()) || 
           stock.name.toLowerCase().startsWith(query.toLowerCase());
@@ -98,16 +112,18 @@ export const StockSearch = () => {
         return { ...stock, distance, startsWithQuery };
       })
       .filter(stock => {
+        // Use a threshold proportional to the query length
         const threshold = Math.max(2, Math.floor(query.length / 2));
         return stock.distance <= threshold || stock.startsWithQuery;
       })
       .sort((a, b) => {
+        // Sort by exact matches first, then by "starts with", then by distance
         if (a.startsWithQuery && !b.startsWithQuery) return -1;
         if (!a.startsWithQuery && b.startsWithQuery) return 1;
         return a.distance - b.distance;
       })
-      .slice(0, 5)
-      .map(({ ticker, name }) => ({ ticker, name }));
+      .slice(0, 5) // Limit results
+      .map(({ ticker, name }) => ({ ticker, name })); // Remove the added properties
     
     setFilteredStocks(results);
   }, [query, stocks]);
@@ -121,24 +137,21 @@ export const StockSearch = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const handleSelectStock = (stock: Stock) => {
+    console.log('Selected stock:', stock);
+    console.log('Trade type:', tradeType);
     setQuery(stock.ticker);
-    setSelectedStock(stock);
-    setShowAdviceForm(true);
     setIsDropdownOpen(false);
+    // Here you would typically do something with the selected stock
   };
 
   const toggleTradeType = () => {
     setTradeType(tradeType === 'BUY' ? 'SELL' : 'BUY');
-  };
-
-  const closeAdviceForm = () => {
-    setShowAdviceForm(false);
-    setSelectedStock(null);
-    setQuery('');
   };
 
   return (
@@ -158,7 +171,7 @@ export const StockSearch = () => {
         
         <Input
           type="text"
-          placeholder="Search stocks..."
+          placeholder="Start a post..."
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -197,24 +210,6 @@ export const StockSearch = () => {
       {error && query.length > 0 && filteredStocks.length === 0 && !isLoading && (
         <div className="absolute w-full bg-white mt-1 rounded-md shadow-lg z-10 border border-gray-200 p-4 text-center text-sm text-red-500">
           {error}
-        </div>
-      )}
-
-      {showAdviceForm && selectedStock && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-fadeIn">
-            <button
-              onClick={closeAdviceForm}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <PostAdviceForm 
-              selectedStock={selectedStock.ticker}
-              tradeType={tradeType}
-              onSuccess={closeAdviceForm}
-            />
-          </div>
         </div>
       )}
     </div>
