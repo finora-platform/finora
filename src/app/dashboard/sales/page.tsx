@@ -20,6 +20,7 @@ export default function Sales() {
     quality: "All Lead quality",
   })
 
+
   // Extract unique values for filters
   const sources = ["All Sources", ...new Set(leadsData.leads.map((lead) => lead.source))]
   const plans = ["All Plans", "Free", "Basic", "Premium", "Enterprise"]
