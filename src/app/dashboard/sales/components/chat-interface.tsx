@@ -11,6 +11,20 @@ interface ChatInterfaceProps {
   messages: Message[]
 }
 
+/**
+ * Renders a chat interface for sales lead communication.
+ *
+ * Displays a list of messages and provides controls for sending new messages, payment links,
+ * uploading documents, and using message templates. Manages its own chat state and supports
+ * sending messages via button or Enter key.
+ *
+ * @component
+ * @param {ChatInterfaceProps} props - The props for the chat interface.
+ * @param {Message[]} props.messages - Initial array of chat messages to display.
+ *
+ * @example
+ * <ChatInterface messages={[{ content: "Hello!", time: "09:00 AM", isOutgoing: false }]} />
+ */
 export const ChatInterface = ({ messages = [] }: ChatInterfaceProps) => {
   const [newMessage, setNewMessage] = useState("")
   const [chatMessages, setChatMessages] = useState<Message[]>(messages)
@@ -90,4 +104,3 @@ export const ChatInterface = ({ messages = [] }: ChatInterfaceProps) => {
     </div>
   )
 }
-

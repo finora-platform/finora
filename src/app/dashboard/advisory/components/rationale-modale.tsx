@@ -1,18 +1,16 @@
 "use client";
 
 import type React from "react";
-
-import { useState, useRef } from "react";
 import {
-  Upload,
-  Send,
-  Bold,
-  Italic,
-  Heading,
-  Quote,
-  List,
-  ListOrdered,
-} from "lucide-react";
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
+import { useState, useRef } from "react";
+import { Document, Page } from "react-pdf";
+import { pdfjs } from "react-pdf";
+import { Upload, Send, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,8 +19,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import Tiptap from "./tiptap";
-import Toolbar from "./toolbar";
+import Tiptap from "@/components/tiptap";
+import Toolbar from "@/components/toolbar";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export default function RationaleModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,6 +40,7 @@ export default function RationaleModal() {
       setPdfFile(file);
       setPdfUrl(URL.createObjectURL(file));
       setActiveTab("pdf");
+      setShowPreview(true);
     }
   };
 
@@ -57,7 +58,7 @@ export default function RationaleModal() {
     e.preventDefault();
   };
 
-  const handleSend = () => {
+  const handlePreview = () => {
     setShowPreview(true);
   };
 
@@ -76,7 +77,7 @@ export default function RationaleModal() {
     }
   };
 
-  const showUpload = editorContent === '<p></p>' || editorContent === '';
+  const showUpload = editorContent === "";
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -95,15 +96,17 @@ export default function RationaleModal() {
         </DialogHeader>
         {!showPreview ? (
           <>
-            <div className="border rounded-md p-4 min-h-[300px] h-[66vh]"
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}>
-              <div className="relative h-full">
-                <Tiptap 
-                    value={editorContent}
-                    onChange={setEditorContent}
-                    setEditorInstance={setEditorInstance}
-                  />
+            <div
+              className="border rounded-md p-4 min-h-[300px] h-[66vh]"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+            >
+              <div className="relative h-full overflow-y-scroll">
+                <Tiptap
+                  value={editorContent}
+                  onChange={setEditorContent}
+                  setEditorInstance={setEditorInstance}
+                />
                 {/* <textarea
                   className="absolute w-full h-full resize-none focus:outline-none z-10 bg-transparent"
                   placeholder="Start typing"
@@ -112,45 +115,31 @@ export default function RationaleModal() {
                 /> */}
                 {showUpload && (
                   <div className="absolute w-full h-full flex flex-col justify-center rounded-md p-8 text-center min-h-[300px] items-center">
-                    {pdfFile ? (
-                    <div className="space-y-2">
-                      <p className="font-medium">{pdfFile.name}</p>
-                      <p className="text-sm text-muted-foreground">{(pdfFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <>
+                      <div className="mb-4 bg-muted rounded-full p-3">
+                        <Upload className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <p className="text-primary font-medium mb-1">
+                        Upload file
+                      </p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Or, Drag and drop a PDF (max. 10 MB)
+                      </p>
                       <Button
                         variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setPdfFile(null)
-                          setPdfUrl(null)
-                        }}
+                        className="z-10"
+                        onClick={() => fileInputRef.current?.click()}
                       >
-                        Remove
+                        Select File
                       </Button>
-                    </div>
-                  ):(<>
-                  <div className="mb-4 bg-muted rounded-full p-3">
-                      <Upload className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-primary font-medium mb-1">Upload file</p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Or, Drag and drop a PDF (max. 10 MB)
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="z-10"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Select File
-                    </Button>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      className="hidden"
-                      accept="application/pdf"
-                      onChange={handleFileChange}
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="application/pdf"
+                        onChange={handleFileChange}
                       />
-                      </>
-                      )}
+                    </>
                   </div>
                 )}
               </div>
@@ -158,37 +147,77 @@ export default function RationaleModal() {
 
             <div className="flex justify-between pt-2 border-t items-center">
               <div className="flex items-center gap-2 pt-2">
-              {editorInstance && <Toolbar editor={editorInstance} />}
+                {editorInstance && <Toolbar editor={editorInstance} />}
               </div>
-              <Button onClick={handleSend}>
-                <Send className="h-4 w-4 mr-2" />
-                Send
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={handlePreview}>
+                  Preview
+                </Button>
+                <Button>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send
+                </Button>
+              </div>
             </div>
           </>
         ) : (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Preview</h3>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowPreview(false)}
+                onClick={() => {
+                  setShowPreview(false);
+                  setPdfUrl(null);
+                }}
               >
                 Back to Edit
+              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Pdf Preview</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Button
+                size="sm"
+                onClick={() => setActiveTab("editor")}
+                className={activeTab === "editor" ? "text-orange-500" : ""}
+              >
+                <Send />
+                Send
               </Button>
             </div>
 
             {activeTab === "pdf" && pdfUrl ? (
-              <div className="border rounded-md overflow-hidden h-[500px]">
-                <iframe
-                  src={pdfUrl}
-                  className="w-full h-full"
-                  title="PDF Preview"
-                />
+              <div className="border rounded-md overflow-auto h-[66vh] flex justify-center">
+                <Document
+                  file={pdfUrl}
+                  className="w-full"
+                  loading={
+                    <div className="flex items-center justify-center h-full">
+                      Loading PDF...
+                    </div>
+                  }
+                  error={
+                    <div className="flex items-center justify-center h-full">
+                      Failed to load PDF
+                    </div>
+                  }
+                >
+                  <Page
+                    pageNumber={1}
+                    width={800}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                    className="flex justify-center bg-[#E4E7EC]"
+                  />
+                </Document>
               </div>
             ) : (
-              <div className="border rounded-md p-6 min-h-[500px] bg-white">
+              <div className="border rounded-md p-6 min-h-[67vh] bg-white">
                 <div className="max-w-[600px] mx-auto">
                   <div className="text-right mb-8">
                     <p>April 8, 2025</p>
@@ -198,8 +227,17 @@ export default function RationaleModal() {
                     <p>Dear Sir/Madam,</p>
                   </div>
 
-                  <div className="mb-8 whitespace-pre-wrap">
-                    {editorContent}
+                  <div className="mb-8 whitespace-pre-wrap prose dark:prose-invert">
+                    {editorContent.split('\n').map((line, i) => {
+                      if (line.startsWith('### ')) return <h3 key={i}>{line.substring(4)}</h3>;
+                      if (line.startsWith('## ')) return <h2 key={i}>{line.substring(3)}</h2>;
+                      if (line.startsWith('# ')) return <h1 key={i}>{line.substring(2)}</h1>;
+                      if (line.startsWith('**') && line.endsWith('**')) return <strong key={i}>{line.slice(2,-2)}</strong>;
+                      if (line.startsWith('*') && line.endsWith('*') && !line.startsWith('* ') && !line.endsWith(' *')) 
+                        return <em key={i}>{line.slice(1,-1)}</em>;
+                      if (line.startsWith('~~') && line.endsWith('~~')) return <s key={i}>{line.slice(2,-2)}</s>;
+                      return <p key={i}>{line}</p>;
+                    })}
                   </div>
 
                   <div>

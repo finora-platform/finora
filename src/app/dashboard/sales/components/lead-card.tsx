@@ -10,6 +10,20 @@ interface LeadCardProps {
   onClick: () => void
 }
 
+/**
+ * Renders a summary card for a sales lead.
+ *
+ * Displays the lead's name, source (with icon), elite badge, rating stars, and stats such as views,
+ * messages, documents, and time information. Handles click events for lead selection.
+ *
+ * @component
+ * @param {LeadCardProps} props - The props for the lead card.
+ * @param {Lead} props.lead - The lead object to display.
+ * @param {() => void} props.onClick - Callback when the card is clicked.
+ *
+ * @example
+ * <LeadCard lead={lead} onClick={() => selectLead(lead)} />
+ */
 export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
   const getSourceIcon = (source: string) => {
     switch (source) {
@@ -28,7 +42,7 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
 
   return (
     <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={onClick}>
-      <CardContent className="p-4">
+      <CardContent className="p-6 pt-6">
         <div className="space-y-3">
           <div className="font-medium">{lead.name}</div>
 
@@ -91,4 +105,3 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
     </Card>
   )
 }
-

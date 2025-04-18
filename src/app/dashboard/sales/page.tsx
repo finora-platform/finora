@@ -9,6 +9,7 @@ import { Search, RotateCcw, Download } from "lucide-react"
 import { leadsData } from "@/lib/dummyleads"
 import type { Lead } from "./types/lead"
 import { FilterDropdown } from "./components/filter-dropdown"
+import LeadCSVImportDialog from "./components/lead-csv-import"
 
 export default function Sales() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
@@ -19,6 +20,7 @@ export default function Sales() {
     source: "All Sources",
     quality: "All Lead quality",
   })
+  const [showImportModal, setShowImportModal] = useState(false)
 
   // Extract unique values for filters
   const sources = ["All Sources", ...new Set(leadsData.leads.map((lead) => lead.source))]
@@ -71,7 +73,6 @@ export default function Sales() {
   // Group leads by stage
   const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead")
   const calledStage = filteredLeads.filter((lead) => lead.stage === "called")
-  const trialStage = filteredLeads.filter((lead) => lead.stage === "trial")
   const subscribedStage = filteredLeads.filter((lead) => lead.stage === "subscribed")
   const onboardedStage = filteredLeads.filter((lead) => lead.stage === "onboarded")
 
@@ -117,7 +118,7 @@ export default function Sales() {
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Leads imported 1h ago</span>
-              <Button>
+              <Button onClick={() => setShowImportModal(true)}>
                 <Download className="h-4 w-4 mr-2" />
                 Import leads
               </Button>
@@ -126,10 +127,9 @@ export default function Sales() {
         </header>
 
         <div className="flex-1 overflow-auto p-4">
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-4 gap-8">
             <LeadStage title="Leads" leads={leadsStage} count={leadsStage.length} onLeadClick={handleLeadClick} />
             <LeadStage title="Called" leads={calledStage} count={calledStage.length} onLeadClick={handleLeadClick} />
-            <LeadStage title="On trial" leads={trialStage} count={trialStage.length} onLeadClick={handleLeadClick} />
             <LeadStage
               title="Subscribed"
               leads={subscribedStage}
@@ -147,7 +147,7 @@ export default function Sales() {
       </div>
 
       {selectedLead && <LeadDetailPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />}
+      <LeadCSVImportDialog show={showImportModal} setShow={setShowImportModal} />
     </div>
   )
 }
-

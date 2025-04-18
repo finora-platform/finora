@@ -1,78 +1,133 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import type { Lead } from "./types/lead"
-import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { ActivityTimeline } from "./activity-timeline"
-import { ChatInterface } from "./chat-interface"
+import { useState } from "react";
+import type { Lead } from "./types/lead";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ActivityTimeline } from "./activity-timeline";
+import { ChatInterface } from "./chat-interface";
+import Tiptap from "@/components/tiptap";
 
 interface LeadDetailPanelProps {
-  lead: Lead
-  onClose: () => void
+  lead: Lead;
+  onClose: () => void;
 }
 
+/**
+ * Renders a detailed side panel for a sales lead with multiple tabs.
+ *
+ * Provides tabs for viewing activity timeline, chat messages, call history, shared documents,
+ * and notes (with a rich text editor). Integrates ActivityTimeline, ChatInterface, and Tiptap components.
+ * Uses a dialog for the panel and supports closing via the onClose callback.
+ *
+ * @component
+ * @param {LeadDetailPanelProps} props - The props for the lead detail panel.
+ * @param {Lead} props.lead - The lead object to display details for.
+ * @param {() => void} props.onClose - Callback to close the panel.
+ *
+ * @example
+ * <LeadDetailPanel lead={lead} onClose={handleClose} />
+ */
 export const LeadDetailPanel = ({ lead, onClose }: LeadDetailPanelProps) => {
-  const [activeTab, setActiveTab] = useState("activity")
+  const [activeTab, setActiveTab] = useState("activity");
+  const [noteseditor, setNotesEditor] = useState("");
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent side="right" className="w-1/3 border-l bg-background flex flex-col h-screen p-0">
-      <div>
-      <div className="flex items-center justify-between px-4 py-1 border-b">
-        <DialogTitle className="text-base font-medium">{lead.name}</DialogTitle>
-      </div>
-
-      <Tabs defaultValue="activity" className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="grid grid-cols-5 border-b bg-transparent p-0">
-          <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Activity</TabsTrigger>
-          <TabsTrigger value="chat" className="relative rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-            Chat
-            {lead.unreadMessages && lead.unreadMessages > 0 && (
-              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {lead.unreadMessages}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="call" className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Call</TabsTrigger>
-          <TabsTrigger value="documents" className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Documents</TabsTrigger>
-          <TabsTrigger value="notes" className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Notes</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="activity" className="flex-1 overflow-auto p-4">
-          <ActivityTimeline activities={lead.activities || []} />
-        </TabsContent>
-
-        <TabsContent value="chat" className="flex-1 flex flex-col">
-          <ChatInterface messages={lead.messages || []} />
-        </TabsContent>
-
-        <TabsContent value="call" className="flex-1 p-4">
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="text-muted-foreground mb-2">No call history yet</div>
-            <Button>Start a call</Button>
+      <DialogContent
+        side="right"
+        className="w-1/3 border-l bg-background flex flex-col h-screen p-0"
+      >
+        <div>
+          <div className="flex items-center justify-between px-4 py-1 border-b">
+            <DialogTitle className="text-base font-medium">
+              {lead.name}
+            </DialogTitle>
           </div>
-        </TabsContent>
 
-        <TabsContent value="documents" className="flex-1 p-4">
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="text-muted-foreground mb-2">No documents shared yet</div>
-            <Button>Upload document</Button>
-          </div>
-        </TabsContent>
+          <Tabs
+            defaultValue="activity"
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            <TabsList className="grid grid-cols-5 border-b bg-transparent p-0">
+              <TabsTrigger
+                value="activity"
+                className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                Activity
+              </TabsTrigger>
+              <TabsTrigger
+                value="chat"
+                className="relative rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                Chat
+                {lead.unreadMessages && lead.unreadMessages > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {lead.unreadMessages}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="call"
+                className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                Call
+              </TabsTrigger>
+              <TabsTrigger
+                value="documents"
+                className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                Documents
+              </TabsTrigger>
+              <TabsTrigger
+                value="notes"
+                className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                Notes
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="notes" className="flex-1 p-4">
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="text-muted-foreground mb-2">No notes added yet</div>
-            <Button>Add note</Button>
-          </div>
-        </TabsContent>
-      </Tabs>
-      </div>
+            <TabsContent value="activity" className="flex-1 overflow-auto p-4">
+              <ActivityTimeline activities={lead.activities || []} />
+            </TabsContent>
+
+            <TabsContent value="chat" className="flex-1 flex flex-col">
+              <ChatInterface messages={lead.messages || []} />
+            </TabsContent>
+
+            <TabsContent value="call" className="flex-1 p-4">
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="text-muted-foreground mb-2">
+                  No call history yet
+                </div>
+                <Button>Start a call</Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="documents" className="flex-1 p-4">
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="text-muted-foreground mb-2">
+                  No documents shared yet
+                </div>
+                <Button>Upload document</Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="notes" className="flex-1 p-4">
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="text-muted-foreground mb-2">
+                  No notes added yet
+                </div>
+              </div>
+              <div className="relative border rounded-md p-4 mt-2 h-[64vh] w-[29vw] overflow-hidden">
+                <Tiptap value={noteseditor} onChange={setNotesEditor} />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
-  )
-}
-
+  );
+};
