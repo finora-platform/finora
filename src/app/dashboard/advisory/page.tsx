@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { StockSearch } from './components/stock-search';
-import { TradeCard } from './components/trade-card';
+import TradeCard from './components/trade-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle } from 'lucide-react';
 
@@ -171,7 +171,7 @@ export default function AdvisoryPage() {
                     {activeTrades.map((trade, index) => (
                       <TradeCard
                         key={trade.id}
-                        {...trade}
+                        trade={trade}
                         isExpanded={index === 0} // First one expanded by default
                       />
                     ))}
