@@ -2,6 +2,7 @@
 import type { Lead } from "@/types/lead"
 import { LeadCard } from "./lead-card"
 
+
 interface LeadStageProps {
   title: string
   leads?: Lead[]

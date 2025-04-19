@@ -39,6 +39,7 @@ export const LeadDetailPanel = ({ lead, onClose }: LeadDetailPanelProps) => {
               <option>Premium</option>
               <option>Standard</option>
             </select>
+
           </div>
 
           <Tabs defaultValue="activity" className="flex-1 flex flex-col overflow-hidden">
@@ -88,6 +89,7 @@ export const LeadDetailPanel = ({ lead, onClose }: LeadDetailPanelProps) => {
           </Tabs>
         </div>
       </DialogContent>
+      
     </Dialog>
   )
 }
