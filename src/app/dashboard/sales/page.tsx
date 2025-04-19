@@ -91,7 +91,7 @@ export default function Sales() {
 
   const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead")
   const calledStage = filteredLeads.filter((lead) => lead.stage === "called")
-  const trialStage = filteredLeads.filter((lead) => lead.stage === "trial")
+  // const trialStage = filteredLeads.filter((lead) => lead.stage === "trial")
   const subscribedStage = filteredLeads.filter((lead) => lead.stage === "subscribed")
   const onboardedStage = filteredLeads.filter((lead) => lead.stage === "onboarded")
 
@@ -151,7 +151,7 @@ export default function Sales() {
           <div className="grid grid-cols-5 gap-4">
             <LeadStage title="Leads" leads={leadsStage} count={leadsStage.length} onLeadClick={setSelectedLead} />
             <LeadStage title="Called" leads={calledStage} count={calledStage.length} onLeadClick={setSelectedLead} />
-            <LeadStage title="On trial" leads={trialStage} count={trialStage.length} onLeadClick={setSelectedLead} />
+            {/* <LeadStage title="On trial" leads={trialStage} count={trialStage.length} onLeadClick={setSelectedLead} /> */}
             <LeadStage title="Subscribed" leads={subscribedStage} count={subscribedStage.length} onLeadClick={setSelectedLead} />
             <LeadStage title="Onboarded" leads={onboardedStage} count={onboardedStage.length} onLeadClick={setSelectedLead} />
           </div>
