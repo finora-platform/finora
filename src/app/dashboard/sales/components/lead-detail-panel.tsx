@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState } from "react"
 import type { Lead } from "./types/lead"
@@ -148,6 +148,5 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
-
+  );
+};

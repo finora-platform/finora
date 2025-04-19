@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Search, RotateCcw, Download } from "lucide-react"
 import type { Lead } from "./types/lead"
 import { FilterDropdown } from "./components/filter-dropdown"
+import LeadCSVImportDialog from "./components/lead-csv-import"
 import { createClerkSupabaseClient } from "@/utils/supabaseClient"
 import { useSession, useUser } from '@clerk/nextjs'
 import { LoadingSpinner } from "@/components/ui/loading-spinner" // Create this component
@@ -159,6 +160,7 @@ export default function Sales() {
       </div>
 
       {selectedLead && <LeadDetailPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />}
+      <LeadCSVImportDialog show={showImportModal} setShow={setShowImportModal} />
     </div>
   )
 }

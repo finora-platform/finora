@@ -1,0 +1,31 @@
+name,email,phone,whatsapp,source,disposition,plan,is_elite,rating,relationship_manager,notes
+John Smith,john.smith@example.com,9876543210,9876543210,Website,warm,Premium,TRUE,4,Jane Advisor,Met at conference
+Sarah Johnson,sarah.j@company.org,8765432109,8765432109,Google Ads,hot,Basic,FALSE,3,Mike Sales,Interested in trading options
+David Wilson,david@wilson.net,7654321098,7654321098,Email Campaign,cold,Free,FALSE,2,Jane Advisor,Needs follow-up next week
+Emily Brown,emily.b@sample.com,6543210987,6543210987,Meta Ads,warm,Premium,TRUE,5,Mike Sales,Requested a demo
+Michael Davis,michael@davis.io,5432109876,5432109876,Referral,hot,Elite,TRUE,5,Jane Advisor,Referred by existing client
+Jessica Garcia,jessica.g@work.net,4321098765,4321098765,Website,cold,Basic,FALSE,1,Mike Sales,Signed up for newsletter
+Kevin Rodriguez,kevin.r@personal.com,3210987654,3210987654,LinkedIn,warm,Premium,TRUE,4,Jane Advisor,Interested in long-term investment
+Ashley Williams,ashley.w@email.com,2109876543,2109876543,Google Ads,hot,Elite,TRUE,5,Mike Sales,Ready to invest
+Christopher Jones,chris.j@domain.com,1098765432,1098765432,Website,warm,Basic,FALSE,3,Jane Advisor,Asked about retirement plans
+Brittany Miller,brittany.m@anymail.com,9012345678,9012345678,Meta Ads,cold,Free,FALSE,2,Mike Sales,Attended a webinar
+Daniel Wilson,daniel.w@another.net,8023456791,8023456791,Referral,hot,Premium,TRUE,4,Jane Advisor,Friend recommended our services
+Stephanie Brown,stephanie.b@mail.org,7034567902,7034567902,Email Campaign,warm,Elite,TRUE,5,Mike Sales,Responded to a special offer
+Joseph Garcia,joseph.g@someplace.com,6045679013,6045679013,Website,cold,Basic,FALSE,1,Jane Advisor,Downloaded a whitepaper
+Linda Rodriguez,linda.r@mymail.com,5056790124,5056790124,LinkedIn,warm,Premium,TRUE,3,Mike Sales,Interested in portfolio management
+Brandon Williams,brandon.w@theirmail.com,4067901235,4067901235,Google Ads,hot,Elite,TRUE,5,Jane Advisor,Requested a call back
+Amanda Jones,amanda.j@hermail.com,3079012346,3079012346,Website,warm,Basic,FALSE,4,Mike Sales,Inquired about financial planning
+Tyler Miller,tyler.m@hismail.com,2089012357,2089012357,Meta Ads,cold,Free,FALSE,2,Jane Advisor,Just browsing our website
+Samantha Wilson,samantha.w@ourmail.com,1090123468,1090123468,Referral,hot,Premium,TRUE,5,Mike Sales,Looking for wealth management advice
+Ryan Brown,ryan.b@theiremail.com,9102345689,9102345689,Email Campaign,warm,Elite,TRUE,4,Jane Advisor,Interested in high-yield investments
+Lauren Garcia,lauren.g@anydomain.com,8112345690,8112345690,Website,cold,Basic,FALSE,3,Mike Sales,Signed up for a free trial
+Matthew Rodriguez,matthew.r@anotherdomain.com,7123456901,7123456901,LinkedIn,warm,Premium,TRUE,5,Jane Advisor,Attended our online seminar
+Kayla Williams,kayla.w@somedomain.com,6134569012,6134569012,Google Ads,hot,Elite,TRUE,4,Mike Sales,Wants to schedule a meeting
+Justin Jones,justin.j@workdomain.com,5145690123,5145690123,Website,warm,Basic,FALSE,2,Jane Advisor,Asked about our services
+Olivia Miller,olivia.m@personaldm.com,4156901234,4156901234,Meta Ads,cold,Free,FALSE,1,Mike Sales,No specific interest mentioned
+Ethan Wilson,ethan.w@emaildomain.com,3169012345,3169012345,Referral,hot,Premium,TRUE,5,Jane Advisor,Existing client's family member
+Sophia Brown,sophia.b@maildomain.com,2179012356,2179012356,Email Campaign,warm,Elite,TRUE,3,Mike Sales,Liked our social media posts
+Lucas Garcia,lucas.g@somemail.com,1189012367,1189012367,Website,cold,Basic,FALSE,4,Jane Advisor,Filled out a contact form
+Ava Rodriguez,ava.r@mymain.com,9190123678,9190123678,LinkedIn,warm,Premium,TRUE,5,Mike Sales,Requested information on our top plans
+Noah Williams,noah.w@theirmail.com,8201234689,8201234689,Google Ads,hot,Elite,TRUE,4,Jane Advisor,Ready to make a decision
+Chloe Jones,chloe.j@hermain.com,7212346890,7212346890,Website,warm,Basic,FALSE,2,Mike Sales,Subscribed to our blog

@@ -1,5 +1,16 @@
 import { Home, TrendingUp, Layout, Phone, Users, HelpCircle, Briefcase } from "lucide-react"
 
+/**
+ * Renders the vertical sidebar navigation for the sales dashboard.
+ *
+ * Displays a list of navigation menu items, each with an icon and label.
+ * Highlights the active menu item. Intended for use as a persistent sidebar in the dashboard layout.
+ *
+ * @component
+ *
+ * @example
+ * <LeadSidebar />
+ */
 export function LeadSidebar() {
   const menuItems = [
     { icon: Home, label: "Dashboard", active: false },
@@ -37,4 +48,3 @@ export function LeadSidebar() {
     </div>
   )
 }
-
