@@ -40,6 +40,36 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
     }
   }
 
+  // Get disposition badge color based on value
+  const getDispositionColor = (disposition: string) => {
+    switch (disposition?.toLowerCase()) {
+      case 'hot':
+        return 'bg-red-50 text-red-700 border-red-200'
+      case 'warm':
+        return 'bg-amber-50 text-amber-700 border-amber-200'
+      case 'cold':
+        return 'bg-blue-50 text-blue-700 border-blue-200'
+      case 'called':
+        return 'bg-green-50 text-green-700 border-green-200'
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200'
+    }
+  }
+
+  // Get plan badge color
+  const getPlanColor = (plan: string) => {
+    switch (plan?.toLowerCase()) {
+      case 'elite':
+        return 'bg-purple-50 text-purple-700 border-purple-200'
+      case 'premium':
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200'
+      case 'standard':
+        return 'bg-gray-50 text-gray-700 border-gray-200'
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200'
+    }
+  }
+
   return (
     <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={onClick}>
       <CardContent className="p-6 pt-6">
@@ -58,6 +88,28 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
               </Badge>
             )}
           </div>
+
+          {/* Display disposition and plan for called leads */}
+          {(lead.stage === 'called' || lead.stage === 'subscribed') && (
+            <div className="flex gap-2">
+              {lead.disposition && (
+                <Badge 
+                  variant="outline" 
+                  className={cn("capitalize", getDispositionColor(lead.disposition))}
+                >
+                  {lead.disposition}
+                </Badge>
+              )}
+              {lead.plan && (
+                <Badge 
+                  variant="outline" 
+                  className={cn("capitalize", getPlanColor(lead.plan))}
+                >
+                  {lead.plan}
+                </Badge>
+              )}
+            </div>
+          )}
 
           {lead.rating > 0 && (
             <div className="flex">
