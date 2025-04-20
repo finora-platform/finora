@@ -8,7 +8,7 @@ import { formatDate, formatTime } from "@/utils/format"
 import { EditTradeModal } from "./edit-trade-modal"
 import { ExitTradeModal } from "./exit-trade-modal"
 import { TimelineModal } from "./Timelinemodal"
-import RationaleModal from "@/app/dashboard/advisory/components/rationale-modal"
+import RationaleModal from "@/app/dashboard/advisory/components/rationale-modale"
 
 interface TradeCardProps {
   trade: Trade

@@ -149,7 +149,7 @@ export default function Sales() {
         </header>
 
         <div className="flex-1 overflow-auto p-4">
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <LeadStage title="Leads" leads={leadsStage} count={leadsStage.length} onLeadClick={setSelectedLead} />
             <LeadStage title="Called" leads={calledStage} count={calledStage.length} onLeadClick={setSelectedLead} />
             {/* <LeadStage title="On trial" leads={trialStage} count={trialStage.length} onLeadClick={setSelectedLead} /> */}
@@ -160,7 +160,7 @@ export default function Sales() {
       </div>
 
       {selectedLead && <LeadDetailPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />}
-      <LeadCSVImportDialog show={showImportModal} setShow={setShowImportModal} />
+      {/* <LeadCSVImportDialog show={showImportModal} setShow={setShowImportModal} /> */}
     </div>
   )
 }
