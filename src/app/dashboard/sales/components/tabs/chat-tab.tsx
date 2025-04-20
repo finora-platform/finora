@@ -12,6 +12,20 @@ interface ChatTabProps {
   messages: Message[]
 }
 
+/**
+ * Renders a chat interface tab for a sales lead.
+ *
+ * Displays a list of messages and provides controls for sending new messages, payment links,
+ * uploading documents, and using message templates. Manages its own chat state and supports
+ * sending messages via button or Enter key.
+ *
+ * @component
+ * @param {ChatTabProps} props - The props for the chat tab.
+ * @param {Message[]} props.messages - Initial array of chat messages to display.
+ *
+ * @example
+ * <ChatTab messages={messages} />
+ */
 export function ChatTab({ messages: initialMessages }: ChatTabProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages || [])
   const [newMessage, setNewMessage] = useState("")
@@ -101,4 +115,3 @@ export function ChatTab({ messages: initialMessages }: ChatTabProps) {
     </div>
   )
 }
-

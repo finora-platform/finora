@@ -10,6 +10,17 @@ import { LeadDetailPanel } from "./lead-detail-panel"
 import { Badge } from "@/components/ui/badge"
 import { leadsData } from "@/data/leads"
 
+/**
+ * Renders the main sales lead tracking dashboard.
+ *
+ * Provides sidebar navigation, filter controls, search, columns for each lead stage, and a detail panel for selected leads.
+ * Manages state for search, filters, and selected lead. Coordinates the display of LeadStage and LeadDetailPanel components.
+ *
+ * @component
+ *
+ * @example
+ * <LeadTracker />
+ */
 export function LeadTracker() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedLead, setSelectedLead] = useState<string | null>(null)
@@ -106,4 +117,3 @@ export function LeadTracker() {
     </div>
   )
 }
-

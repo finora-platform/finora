@@ -9,6 +9,7 @@ import { Search, RotateCcw, Download } from "lucide-react"
 import { leadsData } from "@/lib/dummyleads"
 import type { Lead } from "./types/lead"
 import { FilterDropdown } from "./components/filter-dropdown"
+import LeadCSVImportDialog from "./components/lead-csv-import"
 
 export default function Sales() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
@@ -19,6 +20,7 @@ export default function Sales() {
     source: "All Sources",
     quality: "All Lead quality",
   })
+  const [showImportModal, setShowImportModal] = useState(false)
 
   // Extract unique values for filters
   const sources = ["All Sources", ...new Set(leadsData.leads.map((lead) => lead.source))]
@@ -116,7 +118,7 @@ export default function Sales() {
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Leads imported 1h ago</span>
-              <Button>
+              <Button onClick={() => setShowImportModal(true)}>
                 <Download className="h-4 w-4 mr-2" />
                 Import leads
               </Button>
@@ -145,7 +147,7 @@ export default function Sales() {
       </div>
 
       {selectedLead && <LeadDetailPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />}
+      <LeadCSVImportDialog show={showImportModal} setShow={setShowImportModal} />
     </div>
   )
 }
-

@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from "react";
 import {
@@ -21,7 +22,6 @@ import CSVUpload from "@/components/add-csv";
 import { Client } from "../lib/types";
 import { useSession, useUser } from '@clerk/nextjs';
 import { createClerkSupabaseClient, SupabaseClient } from "@/utils/supabaseClient";
-
 
 export default function ClientTable() {
   const [clients, setClients] = useState<Client[]>([]);

@@ -5,6 +5,19 @@ interface ActivityTabProps {
   activities: Activity[]
 }
 
+/**
+ * Renders a grouped list of sales lead activities by date.
+ *
+ * Displays each activity group with a date header and a list of events, each with an icon, title, time, and optional description.
+ * If no activities are provided, displays sample data for demonstration.
+ *
+ * @component
+ * @param {ActivityTabProps} props - The props for the activity tab.
+ * @param {Activity[]} props.activities - Array of activity groups to display.
+ *
+ * @example
+ * <ActivityTab activities={activities} />
+ */
 export function ActivityTab({ activities }: ActivityTabProps) {
   // If no activities provided, show sample data
   const displayActivities =
@@ -67,4 +80,3 @@ export function ActivityTab({ activities }: ActivityTabProps) {
     </div>
   )
 }
-

@@ -15,6 +15,21 @@ interface LeadDetailPanelProps {
   onClose: () => void;
 }
 
+/**
+ * Renders a detailed side panel for a sales lead with multiple tabs.
+ *
+ * Provides tabs for viewing activity timeline, chat messages, call history, shared documents,
+ * and notes (with a rich text editor). Integrates ActivityTimeline, ChatInterface, and Tiptap components.
+ * Uses a dialog for the panel and supports closing via the onClose callback.
+ *
+ * @component
+ * @param {LeadDetailPanelProps} props - The props for the lead detail panel.
+ * @param {Lead} props.lead - The lead object to display details for.
+ * @param {() => void} props.onClose - Callback to close the panel.
+ *
+ * @example
+ * <LeadDetailPanel lead={lead} onClose={handleClose} />
+ */
 export const LeadDetailPanel = ({ lead, onClose }: LeadDetailPanelProps) => {
   const [activeTab, setActiveTab] = useState("activity");
   const [noteseditor, setNotesEditor] = useState("");

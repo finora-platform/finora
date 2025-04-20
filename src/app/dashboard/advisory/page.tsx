@@ -5,7 +5,7 @@ import { StockSearch } from './components/stock-search'
 import TradeCard from './components/trade-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertTriangle } from 'lucide-react'
-import  AdvisoryTradeList  from '@/components/trade-card'
+import  AdvisoryTradeList  from '@/components/advisory-trade-list'
 
 // Dummy data for trades
 const dummyTrades = [
@@ -57,7 +57,7 @@ export default function AdvisoryPage() {
   const [selectedClientId, setSelectedClientId] = useState<number | undefined>(undefined)
 
   const UnderMaintenanceScreen = () => (
-    <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+    <div className="flex flex-col items-center justify-center py-20 text-gray-500 ">
       <AlertTriangle className="h-16 w-16 mb-4" />
       <h3 className="text-xl font-medium mb-2">Under Maintenance</h3>
       <p>This section is currently under maintenance. Please check back later.</p>
@@ -65,7 +65,7 @@ export default function AdvisoryPage() {
   )
 
   return (
-    <div className="w-full">
+    <div className="w-full h-screen overflow-y-auto px-4">
       {/* Top-level navigation tabs */}
       <Tabs defaultValue="trades" value={mainTab} onValueChange={setMainTab} className="w-full">
         <div className="border-b">
@@ -215,9 +215,9 @@ export default function AdvisoryPage() {
             <TabsTrigger value="exited" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
               Exited
             </TabsTrigger>
-            <TabsTrigger value="all" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
+            {/* <TabsTrigger value="all" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
               All Trades
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
           
           <TabsContent value="active" className="mt-0">
