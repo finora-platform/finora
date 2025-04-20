@@ -23,11 +23,24 @@ const DetailPanel = ({ trade }) => {
 
   return (
     <div className="w-[25%] px-2 border-l">
-      <Accordion type="multiple" defaultValue={["value-1", "value-2"]} className="w-full">
+      <Accordion
+        type="multiple"
+        defaultValue={["value-1", "value-2"]}
+        className="w-full mt-6"
+      >
         <AccordionItem value="value-1">
           <AccordionTrigger>Trade Details</AccordionTrigger>
           <AccordionContent>
-            <h3 className="font-medium text-lg border-b">{stockName}</h3>
+            <span
+              className={`px-2 py-0.5 rounded text-xs font-medium mr-3 ${
+                type === "BUY"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {type}
+            </span>
+            <h3 className="font-medium text-lg border-b mt-2">{stockName}</h3>
             <div className="p-4 border-t border-gray-100">
               <div className="grid grid-cols-2 gap-4 py-2">
                 <div>

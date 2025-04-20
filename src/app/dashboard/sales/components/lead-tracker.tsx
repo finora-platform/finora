@@ -4,9 +4,9 @@ import { useState } from "react"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { LeadStage } from "@/components/lead-stage"
-import { LeadSidebar } from "@/components/lead-sidebar"
-import { LeadDetailPanel } from "@/components/lead-detail-panel"
+import { LeadStage } from "./lead-stage"
+import { LeadSidebar } from "./lead-sidebar"
+import { LeadDetailPanel } from "./lead-detail-panel"
 import { Badge } from "@/components/ui/badge"
 import { leadsData } from "@/data/leads"
 
@@ -22,7 +22,6 @@ export function LeadTracker() {
   const stages = [
     { id: "leads", title: "Leads", count: leadsData.leads.length },
     { id: "called", title: "Called", count: leadsData.called.length },
-    { id: "on-trial", title: "On trial", count: leadsData.onTrial.length },
     { id: "subscribed", title: "Subscribed", count: leadsData.subscribed.length },
     { id: "onboarded", title: "Onboarded", count: leadsData.onboarded.length },
   ]

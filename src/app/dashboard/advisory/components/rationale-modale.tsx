@@ -92,7 +92,7 @@ export default function RationaleModal({trade}) {
           Open Rationale
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[80vw] max-w-none h-[80vh] max-h-[80vh] overflow-auto pb-0">
+      <DialogContent className="w-[80vw] max-w-none h-[80vh] max-h-[80vh] overflow-auto py-0">
         {false &&<DialogHeader>
           <DialogTitle className="sr-only">Rationale Editor</DialogTitle>
         </DialogHeader>}
@@ -101,7 +101,7 @@ export default function RationaleModal({trade}) {
         {!showPreview ? (
             <div className="flex-1">
               <div
-                className="border rounded-md p-4 min-h-[300px] h-[70vh]"
+                className="border rounded-md p-4 min-h-[300px] h-[70vh] mt-6"
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
               >
