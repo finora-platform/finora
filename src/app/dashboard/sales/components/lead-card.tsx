@@ -4,6 +4,7 @@ import type { Lead } from "@/types/lead"
 import { ExternalLink, Star } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { format } from "date-fns"
 
 interface LeadCardProps {
   lead: Lead
@@ -11,18 +12,17 @@ interface LeadCardProps {
 }
 
 /**
- * Renders a summary card for a sales lead.
- *
- * Displays the lead's name, source (with icon), elite badge, rating stars, and stats such as views,
- * messages, documents, and time information. Handles click events for lead selection.
+ * Renders a summary card for a sales lead with stage-specific information.
+ * 
+ * - For leads in 'lead' stage: shows rating stars
+ * - For 'called' stage: shows disposition and plan
+ * - For 'subscribed' stage: shows plan and date
+ * - For 'onboarding' stage: shows plan, date, and documents provided
  *
  * @component
  * @param {LeadCardProps} props - The props for the lead card.
  * @param {Lead} props.lead - The lead object to display.
  * @param {() => void} props.onClick - Callback when the card is clicked.
- *
- * @example
- * <LeadCard lead={lead} onClick={() => selectLead(lead)} />
  */
 export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
   const getSourceIcon = (source: string) => {
@@ -70,6 +70,25 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
     }
   }
 
+  // Format date from timestamp
+  const formatDate = (timestamp: string | Date) => {
+    try {
+      return format(new Date(timestamp), 'MMM d, yyyy')
+    } catch {
+      return null
+    }
+  }
+
+  // Get the most relevant date to display
+  const getDisplayDate = () => {
+    if (lead.called) return formatDate(lead.called)
+    if (lead.updated_at) return formatDate(lead.updated_at)
+    if (lead.created_at) return formatDate(lead.created_at)
+    return null
+  }
+
+  const displayDate = getDisplayDate()
+
   return (
     <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={onClick}>
       <CardContent className="p-6 pt-6">
@@ -89,8 +108,19 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
             )}
           </div>
 
-          {/* Display disposition and plan for called leads */}
-          {(lead.stage === 'called' || lead.stage === 'subscribed') && (
+          {/* Stage-specific information */}
+          {lead.stage === 'lead' && lead.rating > 0 && (
+            <div className="flex">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={cn("h-4 w-4", i < lead.rating ? "text-amber-400 fill-amber-400" : "text-muted")}
+                />
+              ))}
+            </div>
+          )}
+
+{(lead.stage === 'called' || lead.stage === 'subscribed') && (
             <div className="flex gap-2">
               {lead.disposition && (
                 <Badge 
@@ -111,14 +141,44 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
             </div>
           )}
 
-          {lead.rating > 0 && (
-            <div className="flex">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={cn("h-4 w-4", i < lead.rating ? "text-amber-400 fill-amber-400" : "text-muted")}
-                />
-              ))}
+          {lead.stage === 'subscribed' && (
+            <div className="flex gap-2">
+              {lead.plan && (
+                <Badge 
+                  variant="outline" 
+                  className={cn("capitalize", getPlanColor(lead.plan))}
+                >
+                  {lead.plan}
+                </Badge>
+              )}
+              {displayDate && (
+                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                  {displayDate}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {lead.stage === 'onboarding' && (
+            <div className="flex gap-2 flex-wrap">
+              {lead.plan && (
+                <Badge 
+                  variant="outline" 
+                  className={cn("capitalize", getPlanColor(lead.plan))}
+                >
+                  {lead.plan}
+                </Badge>
+              )}
+              {displayDate && (
+                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                  {displayDate}
+                </Badge>
+              )}
+              {lead.it_sfile && (
+                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                  📄 Document
+                </Badge>
+              )}
             </div>
           )}
 
@@ -138,10 +198,10 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
                 </div>
               )}
 
-              {lead.documents > 0 && (
+              {lead.it_sfile && lead.stage !== 'onboarding' && (
                 <div className="flex items-center gap-1">
                   <span>📄</span>
-                  <span>{lead.documents}</span>
+                  <span>Document</span>
                 </div>
               )}
             </div>
@@ -149,7 +209,6 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
             <div>
               {lead.timeAgo && <span>{lead.timeAgo}</span>}
               {lead.timeLeft && <span>{lead.timeLeft} left</span>}
-              {lead.date && <span>{lead.date}</span>}
             </div>
           </div>
         </div>
