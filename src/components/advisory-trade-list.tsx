@@ -58,30 +58,33 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
     }
   };
   const fetchTrades = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const supabase = await createClerkSupabaseClient(session)
+      const supabase = await createClerkSupabaseClient(session);
+      
+      // First fetch the rows with the current advisor's ID
+      let query = supabase
+        .from("user_trades")
+        .select("*")
+        .eq("advisor_id", session.user.id); // Filter by current advisor's ID
   
-      // First fetch the rows
-      let query = supabase.from("user_trades").select("*")
-  
-      // If clientId is provided, filter by it
+      // If clientId is provided, additionally filter by it
       if (clientId) {
-        query = query.eq("user_id", clientId)
+        query = query.eq("user_id", clientId);
       }
   
-      const { data, error } = await query.order("created_at", { ascending: false })
+      const { data, error } = await query.order("created_at", { ascending: false });
   
       if (error) {
-        console.error("Error fetching trades:", error)
-        setLoading(false)
-        return
+        console.error("Error fetching trades:", error);
+        setLoading(false);
+        return;
       }
   
       if (!data || data.length === 0) {
-        setTrades([])
-        setLoading(false)
-        return
+        setTrades([]);
+        setLoading(false);
+        return;
       }
   
       // Process trade data to get all unique trades with their latest version
@@ -90,21 +93,15 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
       data.forEach((row, rowIndex) => {
         if (row.trade_data && Array.isArray(row.trade_data)) {
           row.trade_data.forEach((tradeData, tradeIndex) => {
-            // Create a unique key for each trade based on stock, tradeType, and potentially other identifiers
-            // You might need to adjust this key construction based on your specific requirements
             const tradeKey = `${tradeData.stock}-${tradeData.tradeType}-${tradeData.segment}`;
-            
-            // Generate an ID for this trade
             const tradeId = rowIndex * 1000 + tradeIndex;
             
-            // Format the trade with required properties
             const formattedTrade = {
               id: tradeId, 
               rowId: row.id,
               advisorId: row.advisor_id,
               userId: row.user_id,
               ...tradeData,
-              // Ensure targets is always an array
               targets: Array.isArray(tradeData.targets)
                 ? tradeData.targets
                 : tradeData.targets
@@ -112,7 +109,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
                   : [],
             };
             
-            // If we haven't seen this trade before, or this version is newer than what we have
             if (!uniqueTradesMap.has(tradeKey) || 
                 new Date(tradeData.createdAt) > new Date(uniqueTradesMap.get(tradeKey)!.createdAt)) {
               uniqueTradesMap.set(tradeKey, formattedTrade);
@@ -121,7 +117,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
         }
       });
       
-      // Convert map to array
       let allTrades = Array.from(uniqueTradesMap.values());
       
       // Apply filters
@@ -135,17 +130,15 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
         filteredTrades = filteredTrades.filter(trade => trade.status === statusFilter);
       }
       
-      // Sort by created date, newest first
       filteredTrades.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
       setTrades(filteredTrades);
     } catch (error) {
-      console.error("Error in fetchTrades:", error)
+      console.error("Error in fetchTrades:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
-
 
   const handleTradeUpdate = async (updatedTrade: Trade) => {
     try {
