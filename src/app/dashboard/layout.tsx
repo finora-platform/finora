@@ -22,7 +22,7 @@ export default function RootLayout({
           <AppHeader />
           <div className="flex flex-1 overflow-hidden">
             <AppSidebar />
-            <main className="flex-1">
+            <main className="flex-1 h-full overflow-y-auto bg-background">
               <div>
                 {children}
               </div>
