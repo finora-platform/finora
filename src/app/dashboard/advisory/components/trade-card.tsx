@@ -4,7 +4,7 @@ import {
   ChevronUp,
   ChevronDown
 } from "lucide-react";
-import RationaleModal from "./rationale-modale";
+import RationaleModal from "./rationale-modal";
 
 interface TradeCardProps {
   id: string;

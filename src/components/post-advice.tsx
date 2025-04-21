@@ -135,6 +135,7 @@ export default function PostAdviceForm({
       .from("client3")
       .select("id, name, email, whatsapp, assigned_rn, risk, ekyc_status, plan")
       .eq("plan", plan)
+      .eq("advisor_id", session.user.id)// Filter by current advisor's ID
       .limit(100);
     
     if (!error && data) {

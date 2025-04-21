@@ -58,7 +58,7 @@ export default function ClientTable() {
         if (client) {
           setSupabaseClient(client);
           fetchClients(client);
-          fetchLatestTrades(client);
+          // fetchLatestTrades(client);
         }
       };
       initializeSupabaseClient();
