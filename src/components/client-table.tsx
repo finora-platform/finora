@@ -63,15 +63,15 @@ export default function ClientTable() {
   const fetchClients = async (client) => {
     setLoading(true);
     setError('');
-    
+
     try {
       const { data, error } = await client
         .from('client3')
         .select('*')
         .filter('user_id', 'eq', user.id.toString());
-      
+
       if (error) throw error;
-      
+
       setClients(data || []);
     } catch (err) {
       setError(`Error fetching clients: ${err.message}`);
@@ -81,99 +81,23 @@ export default function ClientTable() {
     }
   };
 
-//   const fetchLatestTrades = async (client: SupabaseClient) => {
-//     try {
-//       // First get all user_trades for this advisor
-//       const { data: tradesData, error: tradesError } = await client
-//         .from('user_trades')
-//         .select('user_id, trade_data')
-//         .eq('advisor_id', user?.id);
-  
-//       if (tradesError) throw tradesError;
-//       if (!tradesData) return;
-  
-//       // Process to get the latest trade for each client
-//       const latestTradesMap: Record<string, any> = {};
-  
-//       tradesData.forEach(trade => {
-//         try {
-//           // Handle case where trade_data might be a string or array
-//           let tradeData = trade.trade_data;
-          
-//           // If it's a string, parse it as JSON
-//           if (typeof tradeData === 'string') {
-//             try {
-//               tradeData = JSON.parse(tradeData);
-//             } catch (e) {
-//               console.warn('Failed to parse trade_data as JSON for user:', trade.user_id);
-//               return;
-//             }
-//           }
-  
-//           // Ensure we have an array at this point
-// // Normalize tradeData to an array
-// if (!Array.isArray(tradeData)) {
-//   if (typeof tradeData === 'object' && tradeData !== null) {
-//     tradeData = [tradeData]; // wrap single trade in an array
-//   } else {
-//     console.warn('Invalid trade_data format for user:', trade.user_id, tradeData);
-//     return;
-//   }
-// }
-
-  
-//           // Filter out invalid entries and ensure createdAt exists
-//           const validTrades = tradeData.filter(t => 
-//             t && 
-//             typeof t === 'object' && 
-//             t.createdAt && 
-//             typeof t.createdAt === 'string'
-//           );
-  
-//           if (validTrades.length === 0) return;
-  
-//           // Get the most recent trade by createdAt
-//           const latestTrade = validTrades.reduce((latest, current) => {
-//             try {
-//               const currentDate = new Date(current.createdAt).getTime();
-//               const latestDate = new Date(latest.createdAt).getTime();
-//               return currentDate > latestDate ? current : latest;
-//             } catch (e) {
-//               return latest; // If date parsing fails, keep the previous latest
-//             }
-//           });
-  
-//           if (trade.user_id) {
-//             latestTradesMap[trade.user_id] = latestTrade;
-//           }
-//         } catch (err) {
-//           console.error('Error processing trades for user:', trade.user_id, err);
-//         }
-//       });
-  
-//       setLatestTrades(latestTradesMap);
-//     } catch (err) {
-//       console.error('Error fetching latest trades:', err);
-//       // Optionally set an error state here if you want to display it
-//     }
-//   };
 
   const handleDeleteClient = async (id: string) => {
     if (!supabaseClient) {
       setError('Supabase client is not initialized');
       return;
     }
-  
+
     if (!window.confirm('Are you sure you want to delete this client?')) return;
-  
+
     try {
       const { error } = await supabaseClient
         .from('client3')
         .delete()
         .eq('id', id);
-  
+
       if (error) throw error;
-  
+
       await fetchClients(supabaseClient);
     } catch (err) {
       setError(`Error deleting client: ${err.message}`);
@@ -193,26 +117,26 @@ export default function ClientTable() {
   const handleSubmit = async (formData) => {
     setIsSubmitting(true);
     setError('');
-  
+
     try {
       if (existingClient) {
         const { data, error } = await supabaseClient
           .from('client3')
           .update(formData)
           .eq('id', existingClient.id);
-  
+
         if (error) throw error;
-  
+
         await fetchClients(supabaseClient);
       } else {
         const { data, error } = await supabaseClient
           .from('client3')
           .insert([{ ...formData, user_id: String(user.id) }]);
         if (error) throw error;
-  
+
         await fetchClients(supabaseClient);
       }
-  
+
       setShowAddClientDialog(false);
       setExistingClient(null);
     } catch (err) {

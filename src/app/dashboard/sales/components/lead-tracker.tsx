@@ -33,6 +33,7 @@ export function LeadTracker() {
   const stages = [
     { id: "leads", title: "Leads", count: leadsData.leads.length },
     { id: "called", title: "Called", count: leadsData.called.length },
+    // { id: "on-trial", title: "On trial", count: leadsData.onTrial.length },
     { id: "subscribed", title: "Subscribed", count: leadsData.subscribed.length },
     { id: "onboarded", title: "Onboarded", count: leadsData.onboarded.length },
   ]
