@@ -248,7 +248,7 @@ export default function ClientTable() {
       )}
 
       <Dialog open={showAddClientDialog} onOpenChange={setShowAddClientDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] bg-gray-100">
           <DialogHeader>
             <DialogTitle>{existingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
             <DialogDescription>

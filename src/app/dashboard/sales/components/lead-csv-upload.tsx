@@ -23,7 +23,13 @@ const validSources = ["Website", "Google Ads", "Meta Ads", "Email Campaign"];
 const validDispositions = ["hot", "warm", "cold"];
 const validPlans = ["Free", "Basic", "Premium", "Enterprise"];
 
-export default function LeadCSVUpload() {
+interface LeadCSVUploadProps {
+  // If called directly, it may have these props, but we'll make them optional
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export default function LeadCSVUpload({ open, onOpenChange }: LeadCSVUploadProps = {}) {
   const [file, setFile] = useState<File | null>(null);
   const [pastedText, setPastedText] = useState("");
   const [csvData, setCSVData] = useState<any[]>([]);
@@ -182,6 +188,11 @@ export default function LeadCSVUpload() {
     setError("");
     setValidated(false);
     setPreviewVisible(false);
+    
+    // Close dialog if used as a standalone component
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
   };
 
   // Handle data import
@@ -295,6 +306,11 @@ export default function LeadCSVUpload() {
         setError(errorRows.join("\n"));
       } else {
         handleRemoveFile();
+      }
+      
+      // Close dialog if used as a standalone component and import was successful
+      if (onOpenChange && errorRows.length === 0) {
+        onOpenChange(false);
       }
     } catch (err: any) {
       const errorMsg = err.message || "Import failed. Please check for duplicate emails or phone numbers.";

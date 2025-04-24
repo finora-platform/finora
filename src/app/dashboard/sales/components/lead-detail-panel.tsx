@@ -90,7 +90,8 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
         .from('leads')
         .update({ 
           stage: 'onboarded',
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          document:true
         })
         .eq('id', lead.id);
 

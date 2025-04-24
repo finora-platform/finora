@@ -1,4 +1,10 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import LeadCSVUpload from "./lead-csv-upload";
 
 interface LeadCSVImportDialogProps {
@@ -9,10 +15,10 @@ interface LeadCSVImportDialogProps {
 const LeadCSVImportDialog: React.FC<LeadCSVImportDialogProps> = ({ show, setShow }) => {
   return (
     <Dialog open={show} onOpenChange={setShow}>
-      <DialogContent side="right" className="sm:max-w-[33vw] absolute right-0 h-full">
+      <DialogContent className="sm:max-w-[33vw]"> {/* Removed side and absolute classes */}
         <DialogHeader>
-          <DialogTitle>Import Leads from CSV</DialogTitle>
-          <DialogDescription>Upload a CSV file containing lead data</DialogDescription>
+          {/* <DialogTitle>Import Leads from CSV</DialogTitle> */}
+          {/* <DialogDescription>Upload a CSV file containing lead data</DialogDescription> */}
         </DialogHeader>
         <LeadCSVUpload />
       </DialogContent>

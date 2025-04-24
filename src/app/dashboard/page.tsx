@@ -23,7 +23,7 @@ export default function Dashboard() {
             <div className="max-h-screen overflow-y-auto bg-gray-50 p-8">
               <div className="mx-auto max-w-7xl">
                 <h1 className="text-4xl font-bold mb-4">Hi {user.firstName}!</h1>
-                <p className="text-gray-500 mb-4">Your business at a glance</p>
+                {/* <p className="text-gray-500 mb-4">Your business at a glance</p> */}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                   <ActiveClientsChart data={activeClientsData} total={865} />
