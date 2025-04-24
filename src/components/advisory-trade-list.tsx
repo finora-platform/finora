@@ -10,8 +10,8 @@ import { useSession } from "@clerk/nextjs"
 import { AdvisoryTradeCard } from "@/components/advisory-tradecard"
 import { NewTradeForm } from "@/components/new-trade-form"
 import { formatDate } from "@/utils/format"
-import type { AdvisoryTradeListProps, Trade } from "@/types/trade-types"
-import {TimeLine} from "@/components/Timeline"
+import type { AdvisoryTradeListProps, Trade } from "@/components/types";
+
 export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
   segmentFilter = "all",
   statusFilter = "all",
@@ -58,6 +58,7 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
     }
   };
   const fetchTrades = async () => {
+    setLoading(true);
     setLoading(true);
     try {
       const supabase = await createClerkSupabaseClient(session);
@@ -110,7 +111,7 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
             };
             
             if (!uniqueTradesMap.has(tradeKey) || 
-                new Date(tradeData.createdAt) > new Date(uniqueTradesMap.get(tradeKey)!.createdAt)) {
+                new Date(tradeData.createdAt) > new Date(uniqueTradesMap.get(tradeKey)!.created_at)) {
               uniqueTradesMap.set(tradeKey, formattedTrade);
             }
           });

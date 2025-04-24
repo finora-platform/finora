@@ -27,20 +27,33 @@ interface TradeCardProps {
   isExpanded?: boolean;
 }
 
-export const TradeCard: React.FC<TradeCardProps> = ({
-  id,
-  type,
-  stockName,
-  date,
-  time,
-  category,
-  tradeType,
-  entry,
-  stoploss,
-  targets,
-  riskReward,
+export default function TradeCard({
+  // id,
+  // type,
+  // stockName,
+  // date,
+  // time,
+  // category,
+  // tradeType,
+  // entry,
+  // stoploss,
+  // targets,
+  // riskReward,
+  trade,
   isExpanded = false,
-}) => {
+}){
+  const {id,
+    type,
+    stockName,
+    date,
+    time,
+    category,
+    tradeType,
+    entry,
+    stoploss,
+    targets,
+    riskReward}=trade
+
   const [expanded, setExpanded] = useState(isExpanded);
 
   const handleToggleExpand = () => {
@@ -69,7 +82,7 @@ export const TradeCard: React.FC<TradeCardProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
-          <div onClick={(e) => {e.stopPropagation();}}><RationaleModal /></div>
+          <div onClick={(e) => {e.stopPropagation();}}><RationaleModal trade={trade} /></div>
           <span className="text-xs px-2 py-1 bg-gray-100 rounded flex items-center">
             <svg
               className="h-3 w-3 mr-1"
@@ -198,5 +211,3 @@ export const TradeCard: React.FC<TradeCardProps> = ({
     </div>
   );
 };
-
-export default TradeCard;

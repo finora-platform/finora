@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FaEdit, FaPaperPlane, FaTimes, FaAngleDown, FaAngleUp } from "react-icons/fa"
-import { MdArrowForward } from "react-icons/md"
+// import { FaEdit, FaPaperPlane, FaTimes, FaAngleDown, FaAngleUp } from "react-icons/fa"
+import { FilePenLine ,Send,X,ChevronDown, ChevronUp ,MoveRight} from "lucide-react"
+// import { MdArrowForward } from "react-icons/md"
 import { createClerkSupabaseClient } from "@/utils/supabaseClient"
 import { useSession } from "@clerk/nextjs"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -206,9 +207,9 @@ export const Timeline = ({ stock, userId, onClose, className = "" }: TimelinePro
 
   const renderIcon = (type: TimelineItem["type"]) => {
     switch(type) {
-      case "Created": return <FaPaperPlane className="w-3 h-3" />
-      case "Edited": return <FaEdit className="w-3 h-3" />
-      case "Exited": return <FaTimes className="w-3 h-3" />
+      case "Created": return <Send className="w-3 h-3" />
+      case "Edited": return <FilePenLine className="w-3 h-3" />
+      case "Exited": return <X className="w-3 h-3" />
     }
   }
 
@@ -222,7 +223,7 @@ export const Timeline = ({ stock, userId, onClose, className = "" }: TimelinePro
             className="text-gray-500 hover:text-red-500 transition-colors"
             aria-label="Close timeline"
           >
-            <FaTimes className="w-4 h-4" />
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>
@@ -286,7 +287,7 @@ export const Timeline = ({ stock, userId, onClose, className = "" }: TimelinePro
                 </div>
                 
                 <div className="text-gray-400 ml-2">
-                  {expandedItems[idx] ? <FaAngleUp /> : <FaAngleDown />}
+                  {expandedItems[idx] ? <ChevronUp /> : <ChevronDown />}
                 </div>
               </div>
               
@@ -329,7 +330,7 @@ export const Timeline = ({ stock, userId, onClose, className = "" }: TimelinePro
                           <div className="font-medium text-gray-500 mb-1">STOPLOSS</div>
                           <div className="flex items-center">
                             <span className="font-medium">{item.stoploss.split(' → ')[0]}</span>
-                            <MdArrowForward className="mx-2 text-gray-400" />
+                            <MoveRight className="mx-2 text-gray-400" />
                             <span className="font-medium">{item.stoploss.split(' → ')[1]}</span>
                           </div>
                         </div>
@@ -340,7 +341,7 @@ export const Timeline = ({ stock, userId, onClose, className = "" }: TimelinePro
                           <div className="font-medium text-gray-500 mb-1">TARGET</div>
                           <div className="flex items-center">
                             <span className="font-medium">{item.targetChange.split(' → ')[0]}</span>
-                            <MdArrowForward className="mx-2 text-gray-400" />
+                            <MoveRight className="mx-2 text-gray-400" />
                             <span className="font-medium">{item.targetChange.split(' → ')[1]}</span>
                           </div>
                         </div>
