@@ -129,7 +129,7 @@ export const AdvisoryTradeCard = ({
             e.stopPropagation()
           }}
         >
-          <RationaleModal rationale={tradeData.rationale} />
+          <RationaleModal trade={tradeData} />
         </div>
 
         {/* Right Section (Actions & Date) */}

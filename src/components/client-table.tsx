@@ -23,7 +23,6 @@ import { Client } from "../lib/types";
 import { useSession, useUser } from '@clerk/nextjs';
 import { createClerkSupabaseClient, SupabaseClient } from "@/utils/supabaseClient";
 
-
 export default function ClientTable() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +40,6 @@ export default function ClientTable() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
   const [latestTrades, setLatestTrades] = useState<Record<string, any>>({});
-
   const { session, isLoaded } = useSession();
   const { user } = useUser();
 
@@ -85,8 +83,6 @@ export default function ClientTable() {
       setLoading(false);
     }
   };
-
- 
 
   const handleDeleteClient = async (id: string) => {
     if (!supabaseClient) {

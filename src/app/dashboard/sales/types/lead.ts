@@ -2,7 +2,7 @@ export interface Lead {
   id: string
   name: string
   source: string
-  stage: "lead" | "called" | "trial" | "subscribed" | "onboarded"
+  stage: "lead" | "called" | "subscribed" | "onboarded"
   plan?: string
   quality?: string
   isElite?: boolean

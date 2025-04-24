@@ -22,8 +22,8 @@ export default function RootLayout({
           <AppHeader />
           <div className="flex flex-1 overflow-hidden">
             <AppSidebar />
-            <main className="flex-1">
-              <div>
+            <main className="flex-1 h-full bg-background">
+              <div className="h-full">
                 {children}
               </div>
             </main>

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { StockSearch } from './components/stock-search'
-import { TradeCard } from './components/trade-card'
+import TradeCard from './components/trade-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertTriangle } from 'lucide-react'
 import  AdvisoryTradeList  from '@/components/advisory-trade-list'
@@ -145,6 +145,48 @@ export default function AdvisoryPage() {
             </Tabs>
           </div>
           
+          {/* Trades list section */}
+          {/* <div className="w-full">
+            <Tabs defaultValue="active" value={tradeStatusTab} onValueChange={setTradeStatusTab}>
+              <TabsList className="mb-4 justify-start bg-transparent border-b w-full space-x-6 rounded-none">
+                <TabsTrigger value="active" className="relative data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
+                  Active
+                  {activeTrades.length > 0 && (
+                    <span className="ml-2 bg-gray-200 text-xs px-2 py-0.5 rounded-full">
+                      {activeTrades.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
+                  Completed
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="active" className="mt-0">
+                {activeTrades.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No active trades found
+                  </div>
+                ) : (
+                  <div>
+                    {activeTrades.map((trade, index) => (
+                      <TradeCard
+                        key={trade.id}
+                        trade={trade}
+                        isExpanded={index === 0} // First one expanded by default
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="completed" className="mt-0">
+                <div className="text-center py-8 text-gray-500">
+                  No completed trades found
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div> */}
         </TabsContent>
 
         {/* Stock Basket Tab Content */}

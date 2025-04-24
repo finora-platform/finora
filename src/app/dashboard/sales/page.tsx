@@ -26,7 +26,7 @@ export default function Sales() {
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [loading, setLoading] = useState(true)
-
+  const [isLeadsDataEmpty] = useState(() => allLeads.length === 0)
   const { session, isLoaded: isSessionLoaded } = useSession()
   const { user, isLoaded: isUserLoaded } = useUser()
 
@@ -186,7 +186,70 @@ export default function Sales() {
             <LeadStage title="Subscribed" leads={subscribedStage} count={subscribedStage.length} onLeadClick={setSelectedLead} />
             <LeadStage title="Onboarded" leads={onboardedStage} count={onboardedStage.length} onLeadClick={setSelectedLead} />
           </div>
-        </motion.div>
+          {isLeadsDataEmpty && (
+            <div className="h-[94%] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md relative"
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                e.currentTarget.classList.add("border-blue-500", "bg-blue-50")
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                e.currentTarget.classList.remove("border-blue-500", "bg-blue-50")
+              }}
+              onDrop={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                e.currentTarget.classList.remove("border-blue-500", "bg-blue-50")
+                const files = Array.from(e.dataTransfer.files)
+                const acceptedTypes = [
+                  "text/csv",
+                  "application/vnd.ms-excel",
+                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                ]
+                const filteredFiles = files.filter(file => acceptedTypes.includes(file.type))
+                if (filteredFiles.length === 0) {
+                  alert("Only CSV and Excel files are accepted.")
+                  return
+                }
+                // Handle accepted files here
+                console.log("Dropped files:", filteredFiles)
+              }}
+            >
+              <input
+                type="file"
+                id="fileInput"
+                accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = e.target.files ? Array.from(e.target.files) : []
+                  const acceptedTypes = [
+                    "text/csv",
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  ]
+                  const filteredFiles = files.filter(file => acceptedTypes.includes(file.type))
+                  if (filteredFiles.length === 0) {
+                    alert("Only CSV and Excel files are accepted.")
+                    return
+                  }
+                  // Handle accepted files here
+                  console.log("Selected files:", filteredFiles)
+                }}
+              />
+              <Button
+                onClick={() => {setShowImportModal(true);
+                }}
+                className="mb-4"
+              >
+                Add Existing Leads
+              </Button>
+              <p className="text-muted-foreground">Drag and drop CSV or Excel files here, or click the button to select files.</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {selectedLead && <LeadDetailPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />}
