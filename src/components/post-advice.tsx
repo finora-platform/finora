@@ -293,14 +293,14 @@ export default function PostAdviceForm({
           <h2 className="text-lg font-semibold">Post advice for {selectedStock}</h2>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 ">
           <Label>Trade Type</Label>
           <RadioGroup 
             value={tradeType} 
             onValueChange={(value: "BUY" | "SELL") => setTradeType(value)}
             className="flex gap-4 mt-1"
           >
-            <Label className="flex items-center gap-2">
+            <Label className="flex items-center gap-2 ">
               <RadioGroupItem value="BUY" /> BUY
             </Label> 
             <Label className="flex items-center gap-2">

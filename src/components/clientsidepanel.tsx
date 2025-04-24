@@ -341,6 +341,7 @@ useEffect(() => {
           <TabsTrigger value="trades">Trades</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="calls">Call Logs</TabsTrigger>
+          <TabsTrigger value="document">Documents</TabsTrigger>
         </TabsList>
       </Tabs>
 

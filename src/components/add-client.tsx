@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { useUser, useSession } from '@clerk/nextjs';
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
+
 import {
   Card, CardContent, CardFooter, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -10,7 +11,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
   const [formData, setFormData] = useState({
@@ -23,28 +23,25 @@ const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
     ekyc_status: "pending",
     plan: "standard",
     created_at: new Date().toISOString(),
-    user_id: "", // Add user_id field
+    user_id: "",
     ...initialData,
   });
 
   const { session } = useSession();
   const { user } = useUser();
 
-  // Set user_id when the user is available
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
         ...prev,
-        user_id: user.id, // Set the Clerk user ID
+        user_id: user.id,
       }));
     }
   }, [user]);
 
-  
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // ✅ Validation function
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Client name is required";
@@ -57,54 +54,46 @@ const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Handle form change
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors({}); // Clear all errors when any field changes
+    setErrors({});
   };
 
-  // ✅ Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-  
+
     setIsLoading(true);
     try {
-      // 🔎 First, check if the email already exists
       const client = await createClerkSupabaseClient(session);
-      
       const { data: existingClient, error: fetchError } = await client
         .from("client3")
         .select("email")
         .eq("email", formData.email)
         .single();
-  
-      if (fetchError && fetchError.code !== "PGRST116") {
-        throw fetchError;
-      }
-  
+
+      if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
       if (existingClient) {
-        // If email exists, show error and prevent duplicate entry
         setErrors((prev) => ({ ...prev, email: "Email already exists!" }));
         setIsLoading(false);
         return;
       }
-  
-      // 🚀 Insert new client if email is unique
+
       const { error: insertError } = await client
         .from("client3")
-        .insert([{ ...formData, user_id: String(user.id) }]); // Ensure user_id is treated as TEXT  
+        .insert([{ ...formData, user_id: String(user.id) }]);
+
       if (insertError) {
         if (insertError.code === "23505") {
           setErrors((prev) => ({ ...prev, email: "Email already exists!" }));
         } else {
-          alert("An error occurred while saving the client. Please try again.");
+          alert("An error occurred while saving the client.");
         }
         throw insertError;
       }
-  
+
       alert("Client saved successfully!");
-      onCancel(); // Close form/modal
+      onCancel();
     } catch (error) {
       console.error("Error saving data:", error);
     } finally {
@@ -113,83 +102,94 @@ const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-5xl mx-auto p-6">
       <CardHeader>
-        <CardTitle>{mode === "create" ? "New Client" : "Edit Client"}</CardTitle>
+        {/* <CardTitle className="text-2xl font-semibold">
+          {mode === "create" ? "New Client" : "Edit Client"}
+        </CardTitle> */}
       </CardHeader>
+
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            {/* Name Field */}
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Name */}
+          <div className="space-y-2">
+            <label className="block font-medium">Client Name</label>
             <Input
-              placeholder="Client Name"
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              className={errors.name ? "border-red-500" : ""}
-              aria-invalid={!!errors.name}
-              aria-describedby="name-error"
+              placeholder="John Doe"
+              className={`rounded-xl border p-4 ${errors.name ? "border-red-500" : ""}`}
             />
-            {errors.name && (
-              <span id="name-error" className="text-sm text-red-500">
-                {errors.name}
-              </span>
-            )}
+            {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+          </div>
 
-            {/* WhatsApp Number */}
+          {/* WhatsApp */}
+          <div className="space-y-2">
+            <label className="block font-medium">WhatsApp Number</label>
             <Input
-              placeholder="WhatsApp Number"
               value={formData.whatsapp}
               onChange={(e) => handleChange("whatsapp", e.target.value)}
-              className={errors.whatsapp ? "border-red-500" : ""}
-              aria-invalid={!!errors.whatsapp}
-              aria-describedby="whatsapp-error"
+              placeholder="+91 98765 43210"
+              className={`rounded-xl border p-4 ${errors.whatsapp ? "border-red-500" : ""}`}
             />
-            {errors.whatsapp && (
-              <span id="whatsapp-error" className="text-sm text-red-500">
-                {errors.whatsapp}
-              </span>
-            )}
+            {errors.whatsapp && <p className="text-sm text-red-500">{errors.whatsapp}</p>}
+          </div>
 
-            {/* Role */}
+          {/* Role */}
+          <div className="space-y-2">
+            <label className="block font-medium">Role</label>
             <Input
-              placeholder="Role"
               value={formData.role}
               onChange={(e) => handleChange("role", e.target.value)}
+              placeholder="Investor"
+              className="rounded-xl border p-4"
             />
+          </div>
 
-            {/* Email */}
+          {/* Email */}
+          <div className="space-y-2">
+            <label className="block font-medium">Email</label>
             <Input
               type="email"
-              placeholder="Email"
               value={formData.email}
               onChange={(e) => handleChange("email", e.target.value)}
-              className={errors.email ? "border-red-500" : ""}
-              aria-invalid={!!errors.email}
-              aria-describedby="email-error"
+              placeholder="john@example.com"
+              className={`rounded-xl border p-4 ${errors.email ? "border-red-500" : ""}`}
             />
-            {errors.email && (
-              <span id="email-error" className="text-sm text-red-500">
-                {errors.email}
-              </span>
-            )}
+            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+          </div>
 
-            {/* Assigned RM */}
+          {/* Assigned RM */}
+          <div className="space-y-2">
+            <label className="block font-medium">Assigned RM</label>
             <Input
-              placeholder="Assigned RM"
               value={formData.assigned_rn}
               onChange={(e) => handleChange("assigned_rn", e.target.value)}
+              placeholder="RM Name"
+              className="rounded-xl border p-4"
             />
+          </div>
 
-            {/* Risk Profile */}
-            <Input
-              placeholder="Risk Profile"
-              value={formData.risk}
-              onChange={(e) => handleChange("risk", e.target.value)}
-            />
+          {/* Risk Profile */}
+          <div className="space-y-2">
+            <label className="block font-medium">Risk Profile</label>
+            <Select value={formData.risk} onValueChange={(value) => handleChange("risk", value)}>
+              <SelectTrigger className="rounded-xl border p-4">
+                <SelectValue placeholder="Select Risk Profile" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="aggressive">Aggressive</SelectItem>
+                <SelectItem value="conservative">Conservative</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            {/* eKYC Status */}
+          {/* eKYC Status */}
+          <div className="space-y-2">
+            <label className="block font-medium">eKYC Status</label>
             <Select value={formData.ekyc_status} onValueChange={(value) => handleChange("ekyc_status", value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl border p-4">
                 <SelectValue placeholder="KYC Status" />
               </SelectTrigger>
               <SelectContent>
@@ -207,10 +207,13 @@ const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
                 </SelectItem>
               </SelectContent>
             </Select>
+          </div>
 
-            {/* Plan */}
+          {/* Plan */}
+          <div className="space-y-2">
+            <label className="block font-medium">Plan</label>
             <Select value={formData.plan} onValueChange={(value) => handleChange("plan", value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl border p-4">
                 <SelectValue placeholder="Select Plan" />
               </SelectTrigger>
               <SelectContent>
@@ -219,12 +222,16 @@ const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
                 <SelectItem value="lite">Lite</SelectItem>
               </SelectContent>
             </Select>
+          </div>
 
-            {/* Created At */}
+          {/* Created At */}
+          <div className="space-y-2">
+            <label className="block font-medium">Created At</label>
             <Input
               type="date"
               value={formData.created_at.split("T")[0]}
               onChange={(e) => handleChange("created_at", e.target.value)}
+              className="rounded-xl border p-4"
             />
           </div>
         </form>
@@ -232,7 +239,7 @@ const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
 
       <CardFooter className="flex justify-end gap-4">
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button onClick={handleSubmit} disabled={isLoading || Object.keys(errors).length > 0}>
+        <Button onClick={handleSubmit} disabled={isLoading}>
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
           {mode === "create" ? "Create Client" : "Update Client"}
         </Button>
