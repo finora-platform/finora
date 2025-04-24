@@ -50,10 +50,13 @@ export default function ClientTable() {
     if (isLoaded && session) {
       const initializeSupabaseClient = async () => {
         const client = await createClerkSupabaseClient(session);
+        // console.log("Supabase client initialized:", client);
+        console.log("Session:", session);
+
         if (client) {
           setSupabaseClient(client);
           fetchClients(client);
-          //fetchLatestTrades(client);
+          // fetchLatestTrades(client);
         }
       };
       initializeSupabaseClient();
@@ -80,7 +83,6 @@ export default function ClientTable() {
       setLoading(false);
     }
   };
-
 
   const handleDeleteClient = async (id: string) => {
     if (!supabaseClient) {

@@ -59,6 +59,7 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
   };
   const fetchTrades = async () => {
     setLoading(true);
+    setLoading(true);
     try {
       const supabase = await createClerkSupabaseClient(session);
       
@@ -130,7 +131,7 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
         filteredTrades = filteredTrades.filter(trade => trade.status === statusFilter);
       }
       
-      filteredTrades.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      filteredTrades.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
       setTrades(filteredTrades);
     } catch (error) {
@@ -139,7 +140,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
       setLoading(false);
     }
   }
-
 
   const handleTradeUpdate = async (updatedTrade: Trade) => {
     try {

@@ -1,4 +1,4 @@
-"use client";
+// "use client";
 
 import type React from "react";
 import {
@@ -111,12 +111,6 @@ export default function RationaleModal({trade}) {
                     onChange={setEditorContent}
                     setEditorInstance={setEditorInstance}
                   />
-                  {/* <textarea
-                  className="absolute w-full h-full resize-none focus:outline-none z-10 bg-transparent"
-                  placeholder="Start typing"
-                  value={editorContent}
-                  onChange={(e) => setEditorContent(e.target.value)}
-                /> */}
                   {showUpload && (
                     <div className="absolute w-full h-full flex flex-col justify-center rounded-md p-8 text-center min-h-[300px] items-center">
                       <>
