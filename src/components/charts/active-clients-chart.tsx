@@ -8,10 +8,11 @@ import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const PLANS = [
-  { id: "standard", name: "Standard", color: "#2563eb" },
-  { id: "premium", name: "Premium", color: "#10b981" },
-  { id: "elite", name: "Elite", color: "#f97316" }
+  { id: "standard", name: "Standard", color: "#d0bfff" }, // lighter (shade 200)
+  { id: "premium", name: "Premium", color: "#845ef7" },   // medium (shade 500)
+  { id: "elite", name: "Elite", color: "#5f3dc4" }        // darkest (shade 900)
 ]
+
 
 interface PlanData {
   name: string

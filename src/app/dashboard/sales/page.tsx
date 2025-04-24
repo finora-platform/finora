@@ -12,7 +12,6 @@ import LeadCSVImportDialog from "./components/lead-csv-import"
 import { createClerkSupabaseClient } from "@/utils/supabaseClient"
 import { useSession, useUser } from "@clerk/nextjs"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { motion } from "framer-motion"
 
 export default function Sales() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
@@ -26,13 +25,12 @@ export default function Sales() {
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [isLeadsDataEmpty] = useState(() => allLeads.length === 0)
+  const [error, setError] = useState<string | null>(null)
   const { session, isLoaded: isSessionLoaded } = useSession()
   const { user, isLoaded: isUserLoaded } = useUser()
 
   const plans = ["All Plans", "Free", "Basic", "Premium", "Enterprise"]
   const qualities = ["All Lead quality", "Cold", "Warm", "Hot"]
-
   const boardRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -40,6 +38,7 @@ export default function Sales() {
       if (!isSessionLoaded || !isUserLoaded || !session) return
 
       setLoading(true)
+      setError(null)
       try {
         const supabase = await createClerkSupabaseClient(session)
         const { data, error } = await supabase
@@ -48,13 +47,13 @@ export default function Sales() {
           .order("updated_at", { ascending: true })
 
         if (error) {
-          console.error("Failed to fetch leads:", error)
-        } else {
-          setAllLeads(data as Lead[])
-          setFilteredLeads(data as Lead[])
+          throw error
         }
-      } catch (error) {
-        console.error("Error fetching leads:", error)
+        setAllLeads(data as Lead[])
+        setFilteredLeads(data as Lead[])
+      } catch (err) {
+        console.error("Failed to fetch leads:", err)
+        setError("Failed to load leads. Please try again.")
       } finally {
         setLoading(false)
       }
@@ -88,16 +87,6 @@ export default function Sales() {
     setFilteredLeads(result)
   }, [filters, searchQuery, allLeads])
 
-  useEffect(() => {
-    // Scroll to bottom whenever filtered leads change
-    if (boardRef.current) {
-      boardRef.current.scrollTo({
-        top: boardRef.current.scrollHeight,
-        behavior: "smooth",
-      })
-    }
-  }, [filteredLeads])
-
   const resetFilters = () => {
     setFilters({
       plan: "All Plans",
@@ -128,21 +117,19 @@ export default function Sales() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-red-500">{error}</p>
+      </div>
+    )
+  }
+
   return (
-    <motion.div
-      className="flex h-screen bg-background"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="flex h-screen bg-background">
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="border-b p-4">
-          <motion.div
-            className="flex items-center justify-between"
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FilterDropdown options={plans} value={filters.plan} onChange={(value) => setFilters({ ...filters, plan: value })} />
               <FilterDropdown options={sources} value={filters.source} onChange={(value) => setFilters({ ...filters, source: value })} />
@@ -169,16 +156,13 @@ export default function Sales() {
                 Import leads
               </Button>
             </div>
-          </motion.div>
+          </div>
         </header>
 
-        <motion.div
-          className="flex-1 overflow-auto p-4"
+        <div 
+          className="flex-1 overflow-auto p-4" 
           ref={boardRef}
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          style={{ overflowY: "auto" }} // Ensure this is set
+          style={{ overflowY: "auto" }}
         >
           <div className="grid grid-cols-4 gap-4 min-h-full">
             <LeadStage title="Leads" leads={leadsStage} count={leadsStage.length} onLeadClick={setSelectedLead} />
@@ -186,74 +170,11 @@ export default function Sales() {
             <LeadStage title="Subscribed" leads={subscribedStage} count={subscribedStage.length} onLeadClick={setSelectedLead} />
             <LeadStage title="Onboarded" leads={onboardedStage} count={onboardedStage.length} onLeadClick={setSelectedLead} />
           </div>
-          {isLeadsDataEmpty && (
-            <div className="h-[94%] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md relative"
-              onDragOver={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                e.currentTarget.classList.add("border-blue-500", "bg-blue-50")
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                e.currentTarget.classList.remove("border-blue-500", "bg-blue-50")
-              }}
-              onDrop={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                e.currentTarget.classList.remove("border-blue-500", "bg-blue-50")
-                const files = Array.from(e.dataTransfer.files)
-                const acceptedTypes = [
-                  "text/csv",
-                  "application/vnd.ms-excel",
-                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                ]
-                const filteredFiles = files.filter(file => acceptedTypes.includes(file.type))
-                if (filteredFiles.length === 0) {
-                  alert("Only CSV and Excel files are accepted.")
-                  return
-                }
-                // Handle accepted files here
-                console.log("Dropped files:", filteredFiles)
-              }}
-            >
-              <input
-                type="file"
-                id="fileInput"
-                accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  const files = e.target.files ? Array.from(e.target.files) : []
-                  const acceptedTypes = [
-                    "text/csv",
-                    "application/vnd.ms-excel",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  ]
-                  const filteredFiles = files.filter(file => acceptedTypes.includes(file.type))
-                  if (filteredFiles.length === 0) {
-                    alert("Only CSV and Excel files are accepted.")
-                    return
-                  }
-                  // Handle accepted files here
-                  console.log("Selected files:", filteredFiles)
-                }}
-              />
-              <Button
-                onClick={() => {setShowImportModal(true);
-                }}
-                className="mb-4"
-              >
-                Add Existing Leads
-              </Button>
-              <p className="text-muted-foreground">Drag and drop CSV or Excel files here, or click the button to select files.</p>
-            </div>
-          )}
         </div>
       </div>
 
       {selectedLead && <LeadDetailPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />}
       <LeadCSVImportDialog show={isDialogOpen} setShow={setIsDialogOpen} />
-    </motion.div>
+    </div>
   )
 }
