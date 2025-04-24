@@ -1,25 +1,27 @@
 import React from "react";
+import { useState } from "react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {TimelineModal} from "@/components/Timelinemodal";
+import { Timeline } from "@/components/Timeline";
 
 const DetailPanel = ({ trade }) => {
   const {
-    id,
     type,
-    stockName,
-    date,
-    time,
-    category,
+    stock,
+    userId,
     tradeType,
     entry,
     stoploss,
     targets,
     riskReward,
   } = trade;
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false)
+  console.log("trade", trade);
 
   return (
     <div className="w-[25%] px-2 border-l">
@@ -38,9 +40,9 @@ const DetailPanel = ({ trade }) => {
                   : "bg-red-100 text-red-800"
               }`}
             >
-              {type}
+              {tradeType}
             </span>
-            <h3 className="font-medium text-lg border-b mt-2">{stockName}</h3>
+            <h3 className="font-medium text-lg border-b mt-2">{stock}</h3>
             <div className="p-4 border-t border-gray-100">
               <div className="grid grid-cols-2 gap-4 py-2">
                 <div>
@@ -61,7 +63,7 @@ const DetailPanel = ({ trade }) => {
                     Entry
                   </div>
                   <div className="font-medium text-sm">
-                    {entry.min} - {entry.max}
+                    {entry}
                   </div>
                 </div>
                 <div>
@@ -106,7 +108,7 @@ const DetailPanel = ({ trade }) => {
                     Target(s)
                   </div>
                   <div className="font-medium text-sm">
-                    {targets.primary}
+                    {targets}
                     {targets.secondary && <span> » {targets.secondary}</span>}
                   </div>
                 </div>
@@ -134,8 +136,8 @@ const DetailPanel = ({ trade }) => {
         <AccordionItem value="value-2">
           <AccordionTrigger>Timeline</AccordionTrigger>
           <AccordionContent>
-            Yes. It comes with default styles that matches the other
-            components&apos; aesthetic.
+            {/* <TimelineModal isOpen={isTimelineOpen} onOpenChange={setIsTimelineOpen} stock={stock} userId={userId} tradeType={tradeType} /> */}
+            <Timeline stock={stock} userId={userId} className="animate-fadeIn" />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

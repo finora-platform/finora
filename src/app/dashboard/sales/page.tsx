@@ -198,11 +198,7 @@ export default function Sales() {
                 }}
               />
               <Button
-                onClick={() => {
-                  const fileInput = document.getElementById("fileInput")
-                  if (fileInput) {
-                    fileInput.click()
-                  }
+                onClick={() => {setShowImportModal(true);
                 }}
                 className="mb-4"
               >

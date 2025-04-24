@@ -40,7 +40,6 @@ export default function ClientTable() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
   const [latestTrades, setLatestTrades] = useState<Record<string, any>>({});
-
   const { session, isLoaded } = useSession();
   const { user } = useUser();
 
@@ -54,7 +53,7 @@ export default function ClientTable() {
         if (client) {
           setSupabaseClient(client);
           fetchClients(client);
-          fetchLatestTrades(client);
+          //fetchLatestTrades(client);
         }
       };
       initializeSupabaseClient();
