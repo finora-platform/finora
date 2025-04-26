@@ -7,11 +7,18 @@ import { useSession, useUser } from "@clerk/nextjs"
 import { useEffect, useState } from "react"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
+const colors = {
+  gray: { 200: "#E5E7EB", 400: "#9CA3AF" },
+  primary: { 500: "#3B82F6", 600: "#2563EB" },
+  green: { 100: "#D1FAE5", 500: "#10B981", 800: "#065F46" },
+  red: { 100: "#FEE2E2", 500: "#EF4444", 800: "#991B1B" },
+}
+
 const fallbackColors = {
   gray: { 200: "#E5E7EB", 400: "#9CA3AF" },
   primary: { 500: "#3B82F6", 600: "#2563EB" },
   green: { 100: "#D1FAE5", 500: "#10B981", 800: "#065F46" },
-  red: { 100: "#FEE2E2", 500: "#EF4444", 800: "#991B1B" }
+  red: { 100: "#FEE2E2", 500: "#EF4444", 800: "#991B1B" },
 }
 
 const getColor = (color: string, shade: string | number) => {
@@ -26,20 +33,29 @@ const getColor = (color: string, shade: string | number) => {
 interface TradeData {
   entry: string | number
   exitPrice?: string | number
+  exitDate?: string
   stock: string
   status: string
   createdAt: string
   tradeType: string
+  // Additional fields from your data
+  segment: string
+  targets: string[]
+  stoploss: string
+  rangeEntry: boolean
+  trailingSL: boolean
+  rangeTarget: boolean
+  timeHorizon: string
 }
 
 interface Trade {
   id: string
   advisor_id: string
-  trade_data: TradeData
+  trade_data: TradeData | TradeData[] // Can be either a single object or an array
 }
 
 export function RevenueChart() {
-  const [chartData, setChartData] = useState<{date: string, value: number}[]>([])
+  const [chartData, setChartData] = useState<{ date: string; value: number; stock: string; type: string }[]>([])
   const [totalProfit, setTotalProfit] = useState(0)
   const [percentageChange, setPercentageChange] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -53,7 +69,7 @@ export function RevenueChart() {
       setLoading(true)
       try {
         const supabase = await createClerkSupabaseClient(session)
-        
+
         // Fetch trades for current user
         const { data: trades, error } = await supabase
           .from("user_trades")
@@ -62,6 +78,8 @@ export function RevenueChart() {
 
         if (error) throw error
 
+        console.log("Fetched trades:", trades) // Log the raw fetched trades
+
         if (!trades?.length) {
           setChartData([])
           setTotalProfit(0)
@@ -69,38 +87,66 @@ export function RevenueChart() {
           return
         }
 
-        // Process exited trades
-        const processTrade = (trade: Trade) => {
-          const entry = Number(trade.trade_data.entry)
-          const exit = Number(trade.trade_data.exitPrice)
-          if (isNaN(entry)) throw new Error(`Invalid entry price for trade ${trade.id}`)
-          if (isNaN(exit)) throw new Error(`Invalid exit price for trade ${trade.id}`)
-          return {
-            date: new Date(trade.trade_data.createdAt).toLocaleDateString(),
-            value: exit - entry,
-            stock: trade.trade_data.stock,
-            type: trade.trade_data.tradeType
+        // Check if trade_data is an array or a single object and normalize it
+        const allTradeDatas = trades.flatMap((trade) => {
+          // If trade_data is an array, use it directly
+          if (Array.isArray(trade.trade_data)) {
+            return trade.trade_data.map((td) => ({
+              ...td,
+              parentId: trade.id,
+            }))
           }
-        }
+          // If trade_data is a single object, wrap it in an array
+          else {
+            return [
+              {
+                ...trade.trade_data,
+                parentId: trade.id,
+              },
+            ]
+          }
+        })
 
-        const exitedTrades = trades
-          .filter(trade => 
-            trade.trade_data?.status === "EXITED" && 
-            trade.trade_data.exitPrice !== undefined
-          )
-          .map(processTrade)
-          console.log("Exited trades:", exitedTrades)
+        console.log("All inner trade_data items:", allTradeDatas)
 
+        // Now filter & process
+        const exitedTrades = allTradeDatas
+          .filter((td) => td.status === "EXITED" && td.exitPrice !== undefined)
+          .map((td) => {
+            const entry = Number(td.entry)
+            const exit = Number(td.exitPrice)
+            if (isNaN(entry) || isNaN(exit)) {
+              console.warn(`Skipping invalid numbers in trade ${td.parentId}`)
+              return null
+            }
+            const date = td.exitDate || td.createdAt
+            return {
+              date: new Date(date).toLocaleDateString(),
+              value: exit - entry,
+              stock: td.stock,
+              type: td.tradeType,
+            }
+          })
+          .filter(Boolean) as { date: string; value: number; stock: string; type: string }[]
+
+        console.log("Processed exited trades:", exitedTrades)
         // Group by date and calculate daily profit
-        const dailyProfitMap = exitedTrades.reduce((acc, trade) => {
-          acc[trade.date] = (acc[trade.date] || 0) + trade.value
-          return acc
-        }, {} as Record<string, number>)
+        const dailyProfitMap = exitedTrades.reduce(
+          (acc, trade) => {
+            acc[trade.date] = (acc[trade.date] || 0) + trade.value
+            return acc
+          },
+          {} as Record<string, number>,
+        )
+
+        console.log("Daily profit map:", dailyProfitMap) // Log the daily profit map
 
         // Convert to chart data and sort
         const sortedData = Object.entries(dailyProfitMap)
           .map(([date, value]) => ({ date, value }))
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+        console.log("Sorted chart data:", sortedData) // Log the sorted data for chart
 
         // Calculate metrics
         const total = sortedData.reduce((sum, day) => sum + day.value, 0)
@@ -109,7 +155,6 @@ export function RevenueChart() {
         setChartData(sortedData)
         setTotalProfit(total)
         setPercentageChange(change)
-
       } catch (error) {
         console.error("Error processing trades:", error)
       } finally {
@@ -120,11 +165,11 @@ export function RevenueChart() {
     fetchAndProcessTrades()
   }, [session, user])
 
-  const calculatePercentageChange = (data: {value: number}[]) => {
+  const calculatePercentageChange = (data: { value: number }[]) => {
     if (data.length < 2) return 0
     const prev = data[data.length - 2].value
     const current = data[data.length - 1].value
-    return parseFloat((((current - prev) / Math.abs(prev)) * 100).toFixed(1))
+    return Number.parseFloat((((current - prev) / Math.abs(prev)) * 100).toFixed(1))
   }
 
   if (loading) {
@@ -146,14 +191,12 @@ export function RevenueChart() {
         <CardTitle className="flex justify-between items-center">
           <span className="text-lg font-semibold">Trade Performance</span>
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold">
-              ₹{totalProfit.toLocaleString()}
-            </span>
-            <span className={`text-sm font-medium px-2 py-1 rounded-md ${
-              percentageChange >= 0 
-                ? "bg-green-100 text-green-800" 
-                : "bg-red-100 text-red-800"
-            }`}>
+            <span className="text-2xl font-bold">₹{totalProfit.toLocaleString()}</span>
+            <span
+              className={`text-sm font-medium px-2 py-1 rounded-md ${
+                percentageChange >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              }`}
+            >
               {percentageChange >= 0 ? "↑" : "↓"} {Math.abs(percentageChange)}%
             </span>
           </div>
@@ -163,43 +206,37 @@ export function RevenueChart() {
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={getColor('gray', 200)} />
-              <XAxis 
-                dataKey="date" 
-                stroke={getColor('gray', 400)} 
-                fontSize={12} 
-                tickLine={false} 
-                axisLine={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={getColor("gray", 200)} />
+              <XAxis dataKey="date" stroke={getColor("gray", 400)} fontSize={12} tickLine={false} axisLine={false} />
               <YAxis
-                stroke={getColor('gray', 400)}
+                stroke={getColor("gray", 400)}
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `₹${value}`}
                 width={80}
               />
-              <Tooltip 
+              <Tooltip
                 formatter={(value) => [`₹${value}`, "Profit"]}
                 labelFormatter={(date) => `Date: ${date}`}
                 contentStyle={{
-                  borderRadius: '0.5rem',
-                  border: 'none',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  background: 'white'
+                  borderRadius: "0.5rem",
+                  border: "none",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  background: "white",
                 }}
               />
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                stroke={getColor('primary', 500)} 
-                strokeWidth={2} 
-                dot={{ r: 4, fill: getColor('primary', 500) }}
-                activeDot={{ 
-                  r: 6, 
-                  stroke: getColor('primary', 600), 
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={getColor("primary", 500)}
+                strokeWidth={2}
+                dot={{ r: 4, fill: getColor("primary", 500) }}
+                activeDot={{
+                  r: 6,
+                  stroke: getColor("primary", 600),
                   strokeWidth: 2,
-                  fill: 'white'
+                  fill: "white",
                 }}
               />
             </LineChart>

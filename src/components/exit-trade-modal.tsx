@@ -41,6 +41,8 @@ export const ExitTradeModal = ({ trade, isOpen, onOpenChange, onExit }: ExitTrad
   
       const supabase = await createClerkSupabaseClient(session);
       const exitTimestamp = new Date().toISOString();
+
+      
   
       // Create clean trade data object
       const tradeData = {
