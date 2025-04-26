@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Lead } from "./types/lead";
+import type { Lead } from "../types/lead";
 import { X, Phone, Check, CheckCircle, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -140,7 +140,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
   const isLeadStage = lead.stage === 'lead';
   const isCalled = lead.stage === 'called';
   const isSubscribed = lead.stage === 'subscribed';
-  const isOnboarding = lead.stage === 'onboarding';
+  const isOnboarding = lead.stage === 'onboarded';
   const allDocumentsUploaded = verificationDocUploaded && riskProfile && contractUploaded;
 
   return (

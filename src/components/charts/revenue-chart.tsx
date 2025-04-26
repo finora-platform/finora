@@ -106,6 +106,7 @@ export function RevenueChart() {
             ]
           }
         })
+        
 
         console.log("All inner trade_data items:", allTradeDatas)
 
