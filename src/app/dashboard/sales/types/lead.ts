@@ -8,6 +8,8 @@ export interface Lead {
   isElite?: boolean
   rating?: number
   views?: number
+  phone?: string
+  disposition?: string
   messageCount: number
   documents?: number
   timeAgo?: string
