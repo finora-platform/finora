@@ -24,7 +24,7 @@ const DetailPanel = ({ trade }) => {
   console.log("trade", trade);
 
   return (
-    <div className="w-[25%] px-2 border-l">
+    <div className="w-[25%] px-2 border-l overflow-y-scroll">
       <Accordion
         type="multiple"
         defaultValue={["value-1", "value-2"]}

@@ -7,53 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertTriangle } from 'lucide-react'
 import  AdvisoryTradeList  from '@/components/advisory-trade-list'
 
-// Dummy data for trades
-const dummyTrades = [
-  {
-    id: "1",
-    type: "BUY",
-    stockName: "TATACHEM 25JAN FUT",
-    date: "24 Oct 2024",
-    time: "11:15:58 AM",
-    category: "F&O",
-    tradeType: "INTRADAY",
-    entry: {
-      min: 80124,
-      max: 80312
-    },
-    stoploss: 80000,
-    targets: {
-      primary: 82000,
-      secondary: 103000
-    },
-    riskReward: "2/3"
-  },
-  {
-    id: "2",
-    type: "BUY",
-    stockName: "TATACHEM 25JAN FUT",
-    date: "24 Oct 2024",
-    time: "11:15:58 AM",
-    category: "F&O",
-    tradeType: "INTRADAY",
-    entry: {
-      min: 80124,
-      max: 80312
-    },
-    stoploss: 80000,
-    targets: {
-      primary: 82000,
-      secondary: 103000
-    },
-    riskReward: "2/3"
-  }
-]
-
 export default function AdvisoryPage() {
   const [mainTab, setMainTab] = useState('trades')
   const [tradeTypeTab, setTradeTypeTab] = useState('equity')
   const [tradeStatusTab, setTradeStatusTab] = useState('active')
-  const [activeTrades, setActiveTrades] = useState(dummyTrades)
   const [selectedClientId, setSelectedClientId] = useState<number | undefined>(undefined)
 
   const UnderMaintenanceScreen = () => (
@@ -65,10 +22,10 @@ export default function AdvisoryPage() {
   )
 
   return (
-    <div className="w-full h-screen overflow-y-auto px-4">
+    <div className="w-full h-screen overflow-y-auto bg-[#F2F4F7]">
       {/* Top-level navigation tabs */}
       <Tabs defaultValue="trades" value={mainTab} onValueChange={setMainTab} className="w-full">
-        <div className="border-b">
+        <div className="border-b flex bg-white">
           <TabsList className="mx-auto flex justify-center bg-transparent mb-0">
             <TabsTrigger 
               value="trades" 
@@ -91,28 +48,28 @@ export default function AdvisoryPage() {
           </TabsList>
         </div>
 
-        Trades Tab Content
+        <div className='px-4'>
         <TabsContent value="trades" className="mt-6 w-full px-4">
           {/* Create new section */}
           <div className="mb-6 w-full">
             <h2 className="text-base font-medium mb-4">Create new</h2>
             
             {/* Trade type tabs */}
-            <Tabs defaultValue="equity" value={tradeTypeTab} onValueChange={setTradeTypeTab} className="w-full">
-              <TabsList className="w-full mb-4 justify-between">
-                <TabsTrigger value="equity" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 rounded-none">
+            <Tabs defaultValue="equity" value={tradeTypeTab} onValueChange={setTradeTypeTab} className="w-full bg-white border rounded-xl">
+              <TabsList className="w-full mb-4 justify-between rounded-xl text-center">
+                <TabsTrigger value="equity" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:text-purple-600 data-[state=active]:border-purple-600 rounded-none">
                   Equity
                 </TabsTrigger>
-                <TabsTrigger value="fno" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 rounded-none">
+                <TabsTrigger value="fno" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:text-purple-600 data-[state=active]:border-purple-600 rounded-none">
                   F&O
                 </TabsTrigger>
-                <TabsTrigger value="commodities" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 rounded-none">
+                <TabsTrigger value="commodities" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:text-purple-600 data-[state=active]:border-purple-600 rounded-none">
                   Commodities
                 </TabsTrigger>
               </TabsList>
               
               <TabsContent value="equity" className="mt-0">
-                <div className="flex flex-col space-y-4">
+                <div className="flex flex-col space-y-4 px-5 pb-8">
                   <StockSearch />
                   
                   {/* Quick select stocks */}
@@ -122,15 +79,6 @@ export default function AdvisoryPage() {
                         {ticker}
                       </div>
                     ))}
-                    <div className="ml-auto">
-                      <button className="text-gray-500">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="8" y1="12" x2="16" y2="12"></line>
-                          <line x1="12" y1="8" x2="12" y2="16"></line>
-                        </svg>
-                      </button>
-                    </div>
                   </div>
                 </div>
               </TabsContent>
@@ -198,10 +146,11 @@ export default function AdvisoryPage() {
         <TabsContent value="financial-planning">
           <UnderMaintenanceScreen />
         </TabsContent>
+        </div>
       </Tabs>
 
       {/* Advisory Trade List Section */}
-      <div className="mt-12 border-t pt-8">
+      <div className="pt-8 px-4">
         {/* <h2 className="text-xl font-semibold mb-6">Advisory Trade Management</h2>
         <p className="text-gray-600 mb-6">
           Below is the advisory trade list where you can manage trades for your clients. You can edit trade details and exit trades when needed.
@@ -209,10 +158,10 @@ export default function AdvisoryPage() {
         
         <Tabs defaultValue="active">
           <TabsList className="mb-4 justify-start bg-transparent border-b w-full space-x-6 rounded-none">
-            <TabsTrigger value="active" className="relative data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
+            <TabsTrigger value="active" className="relative data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-600 data-[state=active]:shadow-none rounded-none py-2 data-[state=active]:bg-transparent">
               Active
             </TabsTrigger>
-            <TabsTrigger value="exited" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
+            <TabsTrigger value="exited" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-600 data-[state=active]:shadow-none rounded-none py-2 data-[state=active]:bg-transparent">
               Exited
             </TabsTrigger>
             {/* <TabsTrigger value="all" className="data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:shadow-none rounded-none py-2 bg-transparent">
