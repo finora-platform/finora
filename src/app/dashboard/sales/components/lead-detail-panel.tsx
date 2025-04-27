@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Lead } from "../types/lead";
 import { X, Phone, Check, CheckCircle, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +10,6 @@ import { ActivityTimeline } from "./activity-timeline";
 import { ChatInterface } from "./chat-interface";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
 import { useSession } from "@clerk/nextjs";
-import { Lead } from "@/app/dashboard/sales/types/lead";
 
 
 interface LeadDetailPanelProps {

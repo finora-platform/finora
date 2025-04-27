@@ -3,7 +3,6 @@ export interface Lead {
   name: string
   source: string
   stage: "lead" | "called" | "subscribed" | "onboarded"
-  phone: number
   updated_at: string
   created_at: string
   onboarding_date?: string
@@ -15,6 +14,7 @@ export interface Lead {
   isElite?: boolean
   rating?: number
   views?: number
+  phone?: string
   messageCount: number
   documents?: number
   timeAgo?: string
