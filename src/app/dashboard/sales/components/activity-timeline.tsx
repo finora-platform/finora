@@ -1,4 +1,4 @@
-import type { Activity } from "@/types/lead"
+import type { Activity } from "../types/lead"
 import { CheckCircle2 } from "lucide-react"
 
 interface ActivityTimelineProps {

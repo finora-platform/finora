@@ -3,13 +3,18 @@ export interface Lead {
   name: string
   source: string
   stage: "lead" | "called" | "subscribed" | "onboarded"
+  updated_at: string
+  created_at: string
+  onboarding_date?: string
+  document_verified?: boolean
   plan?: string
+  email?: string
+  disposition?: string
   quality?: string
   isElite?: boolean
   rating?: number
   views?: number
   phone?: string
-  disposition?: string
   messageCount: number
   documents?: number
   timeAgo?: string
