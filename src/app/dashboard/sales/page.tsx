@@ -44,6 +44,7 @@ export default function Sales() {
         const { data, error } = await supabase
           .from("leads")
           .select("*")
+          .eq("advisor_id", session.user.id)
           .order("updated_at", { ascending: true })
 
         if (error) {
@@ -97,9 +98,9 @@ export default function Sales() {
   }
 
   const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead")
-  const calledStage = filteredLeads.filter((lead) => lead.stage === "called")
-  const subscribedStage = filteredLeads.filter((lead) => lead.stage === "subscribed")
-  const onboardedStage = filteredLeads.filter((lead) => lead.stage === "onboarded")
+  const calledStage = filteredLeads.filter((lead) => lead.stage === "contacted")
+  const subscribedStage = filteredLeads.filter((lead) => lead.stage === "documented")
+  const onboardedStage = filteredLeads.filter((lead) => lead.stage === "paid")
 
   if (!isSessionLoaded || !isUserLoaded || loading) {
     return (
@@ -165,11 +166,36 @@ export default function Sales() {
           style={{ overflowY: "auto" }}
         >
           <div className="grid grid-cols-4 gap-4 min-h-full">
-            <LeadStage title="Leads" leads={leadsStage} count={leadsStage.length} onLeadClick={setSelectedLead} />
-            <LeadStage title="Called" leads={calledStage} count={calledStage.length} onLeadClick={setSelectedLead} />
-            <LeadStage title="Subscribed" leads={subscribedStage} count={subscribedStage.length} onLeadClick={setSelectedLead} />
-            <LeadStage title="Onboarded" leads={onboardedStage} count={onboardedStage.length} onLeadClick={setSelectedLead} />
-          </div>
+  <LeadStage
+    title="Leads"
+    leads={leadsStage}
+    count={leadsStage.length}
+    onLeadClick={setSelectedLead}
+  />
+  <LeadStage
+    title="Contacted"
+    leads={calledStage}
+    count={calledStage.length}
+    onLeadClick={setSelectedLead}
+  />
+  <LeadStage
+    title="Documented"
+    leads={subscribedStage}
+    count={subscribedStage.length}
+    onLeadClick={setSelectedLead}
+  />
+
+  {/* Paid column: greyed-out + no pointer events */}
+  <div className="bg-gray-50 rounded-lg p-2 pointer-events-none opacity-60">
+    <LeadStage
+      title="Paid"
+      leads={onboardedStage}
+      count={onboardedStage.length}
+      onLeadClick={setSelectedLead}
+    />
+  </div>
+</div>
+
         </div>
       </div>
 

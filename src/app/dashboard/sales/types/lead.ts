@@ -2,7 +2,7 @@ export interface Lead {
   id: string
   name: string
   source: string
-  stage: "lead" | "called" | "subscribed" | "onboarded"
+  stage: "lead" | "contacted" | "documented" | "paid"
   plan?: string
   quality?: string
   isElite?: boolean
@@ -31,4 +31,3 @@ export interface Message {
   time: string
   isOutgoing: boolean
 }
-

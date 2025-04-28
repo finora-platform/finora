@@ -12,6 +12,14 @@ interface LeadCardProps {
 }
 
 export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
+  // Map database status to UI display status
+  const statusDisplayMap = {
+    lead: 'lead',
+    contacted: 'contacted',
+    documented: 'documented',
+    paid: 'paid'
+  }
+
   const getSourceIcon = (source: string) => {
     switch (source) {
       case "Website": return <ExternalLink className="h-4 w-4" />
@@ -27,7 +35,7 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
       case 'hot': return 'bg-red-50 text-red-700 border-red-200'
       case 'warm': return 'bg-amber-50 text-amber-700 border-amber-200'
       case 'cold': return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'called': return 'bg-gray-50 text-gray-700 border-gray-200'
+      case 'contacted': return 'bg-gray-50 text-gray-700 border-gray-200'
       default: return 'bg-gray-50 text-gray-700 border-gray-200'
     }
   }
@@ -54,8 +62,11 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
   }
 
   const displayTimeAgo = getTimeAgo(lead.updated_at || lead.created_at)
-  const displayCalledOrSubscribedDate = lead.updated_at ? getTimeAgo(lead.updated_at) : null
-  const displayOnboardingDate = lead.onboarding_date ? getTimeAgo(lead.onboarding_date) : null
+  const displayContactedOrDocumentedDate = lead.updated_at ? getTimeAgo(lead.updated_at) : null
+  const displayPaidDate = lead.onboarding_date ? getTimeAgo(lead.onboarding_date) : null
+
+  // Get the display status for UI
+  const displayStatus = statusDisplayMap[lead.stage as keyof typeof statusDisplayMap] || lead.stage
 
   return (
     <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={onClick}>
@@ -78,7 +89,7 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
           </div>
 
           {/* Rating for lead stage */}
-          {lead.stage === 'lead' && lead.rating > 0 && (
+          {displayStatus === 'lead' && lead.rating > 0 && (
             <div className="flex">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
@@ -89,8 +100,8 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
             </div>
           )}
 
-          {/* Stage: called or subscribed */}
-          {(lead.stage === 'called' || lead.stage === 'subscribed') && (
+          {/* Stage: contacted or documented */}
+          {(displayStatus === 'contacted' || displayStatus === 'documented') && (
             <div className="flex gap-2 flex-wrap">
               {lead.disposition && (
                 <Badge 
@@ -110,7 +121,7 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
               )}
               {lead.updated_at && (
                 <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                  📞 {new Date(lead.updated_at).toLocaleDateString("en-GB", {
+                  {displayStatus === 'contacted' ? '📞' : '📄'} {new Date(lead.updated_at).toLocaleDateString("en-GB", {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
@@ -120,8 +131,8 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
             </div>
           )}
 
-          {/* Stage: onboarding */}
-          {lead.stage === 'onboarding' && (
+          {/* Stage: paid */}
+          {displayStatus === 'paid' && (
             <div className="flex gap-2 flex-wrap">
               {lead.plan && (
                 <Badge 
@@ -155,9 +166,9 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
                   </>
                 )}
               </Badge>
-              {displayOnboardingDate && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  🚀 {displayOnboardingDate}
+              {displayPaidDate && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  💰 {displayPaidDate}
                 </Badge>
               )}
             </div>

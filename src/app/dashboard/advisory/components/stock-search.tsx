@@ -79,6 +79,8 @@ export const StockSearch = () => {
           {ticker: "KOTAKBANK", name: "Kotak Mahindra Bank Ltd"},
           {ticker: "AXISBANK", name: "Axis Bank Ltd"},
           {ticker: "SBIN", name: "State Bank of India"},
+          {ticker: "BANKBARODA", name: "Bank of Baroda"},
+          {ticker: "PNB", name: "Punjab National Bank"},
         ]);
       } finally {
         setIsLoading(false);
