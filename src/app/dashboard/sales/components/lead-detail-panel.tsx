@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import { useState } from "react";
 import type { Lead } from "../types/lead";
@@ -13,94 +13,119 @@ import { useSession } from "@clerk/nextjs";
 
 
 interface LeadDetailPanelProps {
-  lead: Lead;
-  onClose: () => void;
-  onStatusChange: () => void;
+  lead: Lead
+  onClose: () => void
+  onStatusChange: () => void
 }
 
 export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPanelProps) => {
-  const [activeTab, setActiveTab] = useState("activity");
-  const [disposition, setDisposition] = useState(lead.disposition || "");
-  const [plan, setPlan] = useState(lead.plan || "");
-  const [verificationDocUploaded, setVerificationDocUploaded] = useState(false);
-  const [riskProfile, setRiskProfile] = useState("");
-  const [contractUploaded, setContractUploaded] = useState(false);
-  const [complianceConfirmed, setComplianceConfirmed] = useState(false);
-  const { session } = useSession();
+  const [activeTab, setActiveTab] = useState("activity")
+  const [disposition, setDisposition] = useState(lead.disposition || "")
+  const [plan, setPlan] = useState(lead.plan || "")
+  const [verificationDocUploaded, setVerificationDocUploaded] = useState(false)
+  const [riskProfile, setRiskProfile] = useState("")
+  const [contractUploaded, setContractUploaded] = useState(false)
+  const [complianceConfirmed, setComplianceConfirmed] = useState(false)
+  const [isSendingProfileForm, setIsSendingProfileForm] = useState(false)
+  const [isSendingPaymentLink, setIsSendingPaymentLink] = useState(false)
+  const { session } = useSession()
 
-  console.log("Lead Detail Panel", lead);
+  const isLeadStage = lead.stage === 'lead'
+  const isContacted = lead.stage === 'contacted'
+  const isDocumented = lead.stage === 'documented'
+  const isPaid = lead.stage === 'paid'
+  const allDocumentsUploaded = verificationDocUploaded && riskProfile && contractUploaded
 
-  const handleMarkAsCalled = async () => {
-    if (!window.confirm("Have you called this lead?")) return;
+  const handleMarkAsContacted = async () => {
+    if (!window.confirm("Have you contacted this lead?")) return
 
     try {
-      const supabase = await createClerkSupabaseClient(session);
+      const supabase = await createClerkSupabaseClient(session)
+      
+      const { data: currentLead, error: fetchError } = await supabase
+        .from('leads')
+        .select('stage')
+        .eq('id', lead.id)
+        .single()
+
+      if (fetchError) throw fetchError
+      
+      if (currentLead.stage !== 'lead') {
+        throw new Error(`Cannot mark as contacted from current status: ${currentLead.stage}`)
+      }
+
       const { error } = await supabase
         .from('leads')
         .update({ 
           disposition: disposition || lead.disposition,
           plan: plan || lead.plan || 'standard',
-          stage: 'called',
-          called: true
+          stage: 'contacted',
+          updated_at: new Date().toISOString()
         })
-        .eq('id', lead.id);
+        .eq('id', lead.id)
 
-      if (error) throw error;
+      if (error) throw error
 
-      alert("Lead status updated successfully!");
-      onStatusChange();
-      onClose();
+      const { error: historyError } = await supabase
+        .from('lead_status_history')
+        .insert({
+          lead_id: lead.id,
+          old_status: 'lead',
+          new_status: 'contacted',
+          changed_at: new Date().toISOString()
+        })
+
+      if (historyError) throw historyError
+
+      alert("Lead status updated successfully!")
+      onStatusChange()
     } catch (error) {
-      console.error("Error updating lead:", error);
-      alert("Failed to update lead status");
+      console.error("Error updating lead:", error)
+      alert(`Failed to update lead status: ${error.message}`)
     }
-  };
+  }
 
-  const handleMarkAsSubscribed = async () => {
-    if (!window.confirm("Mark this lead as subscribed?")) return;
+  const handleMarkAsDocumented = async () => {
+    if (!window.confirm("Mark this lead as documented?")) return
 
     try {
-      const supabase = await createClerkSupabaseClient(session);
+      const supabase = await createClerkSupabaseClient(session)
       const { error } = await supabase
         .from('leads')
         .update({ 
-          stage: 'subscribed'
+          stage: 'documented',
+          updated_at: new Date().toISOString()
         })
-        .eq('id', lead.id);
+        .eq('id', lead.id)
 
-      if (error) throw error;
+      if (error) throw error
 
-      alert("Lead marked as subscribed successfully!");
-      onStatusChange();
-      onClose();
+      alert("Lead marked as documented successfully!")
+      onStatusChange()
     } catch (error) {
-      console.error("Error updating lead:", error);
-      alert("Failed to update lead status");
+      console.error("Error updating lead:", error)
+      alert("Failed to update lead status")
     }
-  };
+  }
 
-  const handleVerifyOnboarding = async () => {
-    if (!window.confirm("Complete onboarding and add to clients?")) return;
+  const handleVerifyPayment = async () => {
+    if (!window.confirm("Complete documentation and mark as paid?")) return
   
     try {
-      const supabase = await createClerkSupabaseClient(session);
-      
-      // Get advisor ID from session
-      const advisorId = session?.user?.id || 'unknown';
+      const supabase = await createClerkSupabaseClient(session)
+      const advisorId = session?.user?.id || 'unknown'
 
-      // 1. Update lead status to onboarded
       const { error: leadError } = await supabase
         .from('leads')
         .update({ 
-          stage: 'onboarded',
+          stage: 'paid',
           updated_at: new Date().toISOString(),
-          document:true
+          document: true
         })
-        .eq('id', lead.id);
+        .eq('id', lead.id)
 
-      if (leadError) throw leadError;
+      if (leadError) throw leadError
 
-      // 2. Add to client3 table
       const clientData = {
         name: lead.name,
         email: lead.email,
@@ -110,41 +135,74 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
         risk: riskProfile || 'medium',
         ekyc_status: verificationDocUploaded ? 'verified' : 'pending',
         plan: lead.plan || 'standard',
-        // status: 'active',
-        // source: 'lead_conversion',
         created_at: new Date().toISOString(),
-        // lead_id: lead.id,
         user_id: advisorId,
-        // documents: {
-        //   verification: verificationDocUploaded,
-        //   contract: contractUploaded
-        // }
-      };
+      }
 
       const { error: clientError } = await supabase
         .from('client3')
-        .insert([clientData]);
+        .insert([clientData])
 
-      if (clientError) throw clientError;
+      if (clientError) throw clientError
 
-      alert("Client successfully onboarded and added to system!");
-      onStatusChange();
-      onClose();
+      alert("Client successfully documented and marked as paid!")
+      onStatusChange()
+      onClose()
     } catch (error) {
-      console.error("Onboarding error:", error);
-      alert("Failed to complete onboarding");
+      console.error("Payment verification error:", error)
+      alert("Failed to complete payment verification")
     }
-  };
+  }
 
   const handleRiskProfileChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRiskProfile(e.target.value);
-  };
+    setRiskProfile(e.target.value)
+  }
 
-  const isLeadStage = lead.stage === 'lead';
-  const isCalled = lead.stage === 'called';
-  const isSubscribed = lead.stage === 'subscribed';
-  const isOnboarding = lead.stage === 'onboarded';
-  const allDocumentsUploaded = verificationDocUploaded && riskProfile && contractUploaded;
+  const handleSendProfileForm = async () => {
+    setIsSendingProfileForm(true)
+    try {
+      const supabase = await createClerkSupabaseClient(session)
+      const { error } = await supabase
+        .from('leads')
+        .update({ 
+          profile_form_sent: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', lead.id)
+
+      if (error) throw error
+
+      alert("Profile form sent successfully!")
+    } catch (error) {
+      console.error("Error sending profile form:", error)
+      alert("Failed to send profile form")
+    } finally {
+      setIsSendingProfileForm(false)
+    }
+  }
+
+  const handleSendPaymentLink = async () => {
+    setIsSendingPaymentLink(true)
+    try {
+      const supabase = await createClerkSupabaseClient(session)
+      const { error } = await supabase
+        .from('leads')
+        .update({ 
+          payment_link_sent: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', lead.id)
+
+      if (error) throw error
+
+      alert("Payment link sent successfully!")
+    } catch (error) {
+      console.error("Error sending payment link:", error)
+      alert("Failed to send payment link")
+    } finally {
+      setIsSendingPaymentLink(false)
+    }
+  }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -155,20 +213,30 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
           </div>
 
           {/* Status display */}
-          {isOnboarding ? (
-            <div className="flex items-center gap-2 border border-blue-500 rounded-md p-2 m-2 bg-blue-50">
-              <CheckCircle className="h-4 w-4 text-blue-700" />
-              <span className="text-sm font-medium text-blue-700">Onboarding</span>
-            </div>
-          ) : isSubscribed ? (
+          {isPaid ? (
             <div className="flex items-center gap-2 border border-green-500 rounded-md p-2 m-2 bg-green-50">
               <CheckCircle className="h-4 w-4 text-green-700" />
-              <span className="text-sm font-medium text-green-700">Subscribed</span>
+              <span className="text-sm font-medium text-green-700">Paid</span>
             </div>
-          ) : isCalled ? (
+          ) : isDocumented ? (
+            <div className="flex items-center gap-2 border border-blue-500 rounded-md p-2 m-2 bg-blue-50">
+              <CheckCircle className="h-4 w-4 text-blue-700" />
+              <span className="text-sm font-medium text-blue-700">Documented</span>
+              <Button 
+                variant="default" 
+                size="sm"
+                className="ml-auto"
+                onClick={handleVerifyPayment}
+                disabled={!allDocumentsUploaded || !complianceConfirmed}
+              >
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Complete Onboarding
+              </Button>
+            </div>
+          ) : isContacted ? (
             <div className="flex items-center gap-2 border border-green-500 rounded-md p-2 m-2 bg-green-50">
               <Check className="h-4 w-4 text-green-700" />
-              <span className="text-sm font-medium text-green-700">Called</span>
+              <span className="text-sm font-medium text-green-700">Contacted</span>
               {lead.disposition && (
                 <span className="text-sm capitalize">{lead.disposition}</span>
               )}
@@ -179,10 +247,10 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
                 variant="default" 
                 size="sm"
                 className="ml-auto"
-                onClick={handleMarkAsSubscribed}
+                onClick={handleMarkAsDocumented}
               >
                 <CheckCircle className="h-4 w-4 mr-1" />
-                Subscribed
+                Documented
               </Button>
             </div>
           ) : isLeadStage ? (
@@ -211,11 +279,11 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
 
               <Button 
                 variant="outline" 
-                className="flex items-center gap-1 "
-                onClick={handleMarkAsCalled}
+                className="flex items-center gap-1"
+                onClick={handleMarkAsContacted}
               >
                 <Phone className="h-4 w-4" />
-                <span>Mark as Called</span>
+                <span>Mark as Contacted</span>
               </Button>
             </div>
           ) : null}
@@ -241,119 +309,154 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
             </TabsContent>
 
             <TabsContent value="chat" className="flex-1 flex flex-col">
-              <ChatInterface messages={lead.messages || []} />
+              <ChatInterface 
+                messages={lead.messages || []} 
+                stage={lead.stage}
+                onSendProfileForm={handleSendProfileForm}
+                onSendPaymentLink={handleSendPaymentLink}
+              />
             </TabsContent>
 
             <TabsContent value="call" className="flex-1 p-4">
               <div className="flex flex-col items-center justify-center h-full text-center">
-                {isOnboarding ? (
-                  <div className="text-muted-foreground">Onboarding in progress</div>
-                ) : isSubscribed ? (
+                {isPaid ? (
+                  <div className="text-muted-foreground">Payment completed</div>
+                ) : isDocumented ? (
                   <>
-                    <div className="text-muted-foreground mb-2">Lead has subscribed</div>
+                    <div className="text-muted-foreground mb-2">Lead has been documented</div>
                     <Button onClick={() => setActiveTab("documents")}>
-                      Begin Onboarding
+                      Verify Payment
                     </Button>
                   </>
-                ) : isCalled ? (
+                ) : isContacted ? (
                   <>
-                    <div className="text-muted-foreground mb-2">Call completed</div>
+                    <div className="text-muted-foreground mb-2">Contact completed</div>
                     <div className="text-sm mb-4">Disposition: {lead.disposition || 'Not specified'}</div>
                     <div className="text-sm">Plan: {lead.plan || 'Not specified'}</div>
-                    <Button className="mt-4" onClick={handleMarkAsSubscribed}>
+                    <Button className="mt-4" onClick={handleMarkAsDocumented}>
                       <CheckCircle className="h-4 w-4 mr-1" />
-                      Mark as Subscribed
+                      Mark as Documented
                     </Button>
                   </>
                 ) : (
                   <>
-                    <div className="text-muted-foreground mb-2">No call history yet</div>
-                    <Button>Start a call</Button>
+                    <div className="text-muted-foreground mb-2">No contact history yet</div>
+                    <Button>Start contact</Button>
                   </>
                 )}
               </div>
             </TabsContent>
 
             <TabsContent value="documents" className="flex-1 p-4">
-              {isSubscribed || isOnboarding ? (
+              {isDocumented || isPaid ? (
                 <div className="space-y-6">
                   <div>
                     <h3 className="font-medium mb-2 flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Verification document
+                      Identity Verification
                     </h3>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setVerificationDocUploaded(true)}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload
-                    </Button>
-                    {verificationDocUploaded && (
-                      <span className="ml-2 text-sm text-green-600">✓ Uploaded</span>
+                    {lead.identity_verified ? (
+                      <div className="text-sm text-green-600">✓ Verified</div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Client must provide government ID (Aadhaar, PAN, etc.)
+                        </p>
+                        <Button 
+                          variant="outline"
+                          onClick={() => setVerificationDocUploaded(true)}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Verification
+                        </Button>
+                      </>
                     )}
                   </div>
 
                   <div>
                     <h3 className="font-medium mb-2">Risk Profile</h3>
-                    <select 
-                      className="border rounded px-3 py-2 text-sm w-full"
-                      value={riskProfile}
-                      onChange={handleRiskProfileChange}
-                    >
-                      <option value="">Select risk profile</option>
-                      <option value="low">Low Risk</option>
-                      <option value="medium">Medium Risk</option>
-                      <option value="high">High Risk</option>
-                    </select>
-                    {riskProfile && (
-                      <span className="text-sm text-green-600">✓ Selected: {riskProfile}</span>
+                    {lead.risk_profile ? (
+                      <div className="text-sm text-green-600">
+                        ✓ Completed: {lead.risk_profile}
+                      </div>
+                    ) : (
+                      <>
+                        <select 
+                          className="border rounded px-3 py-2 text-sm w-full"
+                          value={riskProfile}
+                          onChange={handleRiskProfileChange}
+                        >
+                          <option value="">Select risk profile</option>
+                          <option value="low">Low Risk</option>
+                          <option value="medium">Medium Risk</option>
+                          <option value="high">High Risk</option>
+                        </select>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Based on client's profile form responses
+                        </p>
+                      </>
                     )}
                   </div>
 
                   <div>
                     <h3 className="font-medium mb-2 flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Signed contract
+                      Signed Contract
                     </h3>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setContractUploaded(true)}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload
-                    </Button>
-                    {contractUploaded && (
-                      <span className="ml-2 text-sm text-green-600">✓ Uploaded</span>
+                    {lead.contract_signed ? (
+                      <div className="text-sm text-green-600">✓ Signed and Uploaded</div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Client must sign the service agreement
+                        </p>
+                        <Button 
+                          variant="outline"
+                          onClick={() => setContractUploaded(true)}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Signed Contract
+                        </Button>
+                      </>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="compliance-check"
-                        checked={complianceConfirmed}
-                        onChange={(e) => setComplianceConfirmed(e.target.checked)}
-                      />
-                      <label htmlFor="compliance-check" className="text-sm">
-                        Confirm compliant onboarding
-                      </label>
-                    </div>
+                  {!isPaid && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="compliance-check"
+                          checked={complianceConfirmed}
+                          onChange={(e) => setComplianceConfirmed(e.target.checked)}
+                        />
+                        <label htmlFor="compliance-check" className="text-sm">
+                          Confirm all documents are complete and verified
+                        </label>
+                      </div>
 
-                    <Button
-                      className="w-full mt-4"
-                      disabled={!allDocumentsUploaded || !complianceConfirmed}
-                      onClick={handleVerifyOnboarding}
-                    >
-                      Complete Onboarding
-                    </Button>
-                  </div>
+                      <Button
+                        className="w-full mt-4"
+                        disabled={!allDocumentsUploaded || !complianceConfirmed}
+                        onClick={handleVerifyPayment}
+                      >
+                        Complete Onboarding
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <div className="text-muted-foreground mb-2">No documents shared yet</div>
-                  <Button>Upload document</Button>
+                  <div className="text-muted-foreground mb-2">
+                    {isContacted 
+                      ? "Please send the profile form to collect client information"
+                      : "Documents will be available after initial contact"}
+                  </div>
+                  {isContacted && (
+                    <Button onClick={handleSendProfileForm}>
+                      Send Profile Form
+                    </Button>
+                  )}
                 </div>
               )}
             </TabsContent>
@@ -368,5 +471,5 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
         </div>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

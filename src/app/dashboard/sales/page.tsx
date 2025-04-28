@@ -45,6 +45,7 @@ export default function Sales() {
         const { data, error } = await supabase
           .from("leads")
           .select("*")
+          .eq("advisor_id", session.user.id)
           .order("updated_at", { ascending: true })
           .eq("advisor_id", session.user.id)
 
@@ -106,9 +107,9 @@ export default function Sales() {
   }
 
   const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead")
-  const calledStage = filteredLeads.filter((lead) => lead.stage === "called")
-  const subscribedStage = filteredLeads.filter((lead) => lead.stage === "subscribed")
-  const onboardedStage = filteredLeads.filter((lead) => lead.stage === "onboarded")
+  const calledStage = filteredLeads.filter((lead) => lead.stage === "contacted")
+  const subscribedStage = filteredLeads.filter((lead) => lead.stage === "documented")
+  const onboardedStage = filteredLeads.filter((lead) => lead.stage === "paid")
 
   if (!isSessionLoaded || !isUserLoaded || loading) {
     return (

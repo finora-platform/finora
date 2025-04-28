@@ -37,4 +37,3 @@ export interface Message {
   time: string
   isOutgoing: boolean
 }
-

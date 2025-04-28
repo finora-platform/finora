@@ -10,17 +10,6 @@ import { LeadDetailPanel } from "./lead-detail-panel"
 import { Badge } from "@/components/ui/badge"
 import { leadsData } from "@/data/leads"
 
-/**
- * Renders the main sales lead tracking dashboard.
- *
- * Provides sidebar navigation, filter controls, search, columns for each lead stage, and a detail panel for selected leads.
- * Manages state for search, filters, and selected lead. Coordinates the display of LeadStage and LeadDetailPanel components.
- *
- * @component
- *
- * @example
- * <LeadTracker />
- */
 export function LeadTracker() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedLead, setSelectedLead] = useState<string | null>(null)
@@ -32,10 +21,9 @@ export function LeadTracker() {
 
   const stages = [
     { id: "leads", title: "Leads", count: leadsData.leads.length },
-    { id: "called", title: "Called", count: leadsData.called.length },
-    // { id: "on-trial", title: "On trial", count: leadsData.onTrial.length },
-    { id: "subscribed", title: "Subscribed", count: leadsData.subscribed.length },
-    { id: "onboarded", title: "Onboarded", count: leadsData.onboarded.length },
+    { id: "contacted", title: "Contacted", count: leadsData.contacted.length },
+    { id: "documented", title: "Documented", count: leadsData.documented.length },
+    { id: "paid", title: "Paid", count: leadsData.paid.length },
   ]
 
   const handleLeadClick = (leadId: string) => {

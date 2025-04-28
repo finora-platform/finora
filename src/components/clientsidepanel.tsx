@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Mail, X } from "lucide-react";
+import { Phone, Mail, X, Info } from "lucide-react";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
 import { useSession } from "@clerk/nextjs";
-import { Edit} from "lucide-react"
-// import { formatDate, formatTime } from "@/utils/format"
-import type { Trade } from "@/types/trade-types"
+import { Edit } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import ClientReturnsPerformance from "./Client-return-panel";
 
 // Utility functions moved outside the component
 const formatDate = (dateString: string) => {
@@ -56,6 +56,11 @@ interface Trade {
   targets: string[];
   status: "ACTIVE" | "COMPLETED";
   createdAt: string;
+  exitPrice?: string;
+  exitDate?: string;
+  updatedAt?: string;
+  riskReward?: string;
+  userId?: string;
 }
 
 interface Client {
@@ -70,9 +75,11 @@ interface ClientSidePanelProps {
   onClose: () => void;
 }
 
-// Updated TradeCard component
-
-
+// Performance data interfaces
+interface PerformanceData {
+  date: string;
+  value: number;
+}
 
 export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) => {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -121,7 +128,6 @@ export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) 
 
         {/* Right Section (Actions & Date) */}
         <div className="flex items-center gap-2 text-sm">
-
           <div className="text-gray-500 ml-2">
             <span>📅 {formatDate(trade.createdAt)}</span>
             <span className="ml-2">⏰ {formatTime(trade.createdAt)}</span>
@@ -216,8 +222,6 @@ export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) 
             </div>
           </div>
 
-  
-
           {/* Date Info */}
           <div className="mt-4 text-sm text-gray-600">
             <p>Created: {formatDate(trade.createdAt)} at {formatTime(trade.createdAt)}</p>
@@ -231,120 +235,319 @@ export const TradeCard = ({ trade, isLast }: { trade: Trade; isLast: boolean }) 
         </div>
       )}
     </div>
-  )
-}
-const ClientSidePanel: React.FC<ClientSidePanelProps> = ({ client, onClose }) => {
+  );
+};
+
+
+// New Returns Component
+// const ReturnTab = ({ clientId }: { clientId: number }) => {
+//   const [overallPerformance, setOverallPerformance] = useState<PerformanceData[]>([]);
+//   const [lastTenTrades, setLastTenTrades] = useState<PerformanceData[]>([]);
+//   const [yearPerformance, setYearPerformance] = useState<PerformanceData[]>([]);
+//   const [loading, setLoading] = useState(true);
+//   const { session } = useSession();
+
+//   useEffect(() => {
+//     const fetchPerformanceData = async () => {
+//       setLoading(true);
+      
+//       try {
+//         const supabase = await createClerkSupabaseClient(session);
+        
+//         // Mock data for the charts - in a real app, you would fetch this from your database
+//         // Generate overall performance data (2023-2025)
+//         const overallData: PerformanceData[] = [];
+//         const startValue = 100;
+//         let currentValue = startValue;
+        
+//         // Generate data for 2023-2025
+//         const startDate = new Date('2023-01-01');
+//         const endDate = new Date('2025-04-01');
+//         const monthDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+        
+//         for (let i = 0; i <= monthDiff; i++) {
+//           const date = new Date(startDate);
+//           date.setMonth(date.getMonth() + i);
+          
+//           // Random fluctuation between -5% and +8%
+//           const change = currentValue * (Math.random() * 0.13 - 0.05);
+//           currentValue += change;
+          
+//           overallData.push({
+//             date: date.toISOString().substring(0, 7),
+//             value: Math.round(currentValue * 100) / 100
+//           });
+//         }
+        
+//         // Generate last 10 trades performance (negative trend)
+//         const lastTenData: PerformanceData[] = [];
+//         let tenTradesValue = 0;
+        
+//         for (let i = 0; i < 10; i++) {
+//           const date = new Date();
+//           date.setDate(date.getDate() - (10 - i));
+          
+//           // Negative trend
+//           const change = -Math.random() * 12;
+//           tenTradesValue += change;
+          
+//           lastTenData.push({
+//             date: date.toISOString().substring(0, 10),
+//             value: Math.round(tenTradesValue * 100) / 100
+//           });
+//         }
+        
+//         // Generate this year performance (positive trend)
+//         const yearData: PerformanceData[] = [];
+//         let yearValue = 0;
+//         const today = new Date();
+//         const yearStart = new Date(today.getFullYear(), 0, 1);
+//         const dayDiff = Math.floor((today.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24));
+        
+//         for (let i = 0; i <= dayDiff; i++) {
+//           if (i % 7 === 0) { // Add data points weekly
+//             const date = new Date(yearStart);
+//             date.setDate(date.getDate() + i);
+            
+//             // Positive trend with some fluctuation
+//             const change = Math.random() * 2 - 0.5;
+//             yearValue += change;
+            
+//             yearData.push({
+//               date: date.toISOString().substring(0, 10),
+//               value: Math.round(yearValue * 100) / 100
+//             });
+//           }
+//         }
+        
+//         setOverallPerformance(overallData);
+//         setLastTenTrades(lastTenData);
+//         setYearPerformance(yearData);
+//       } catch (error) {
+//         console.error("Error fetching performance data:", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchPerformanceData();
+//   }, [clientId, session]);
+
+//   if (loading) {
+//     return (
+//       <div className="flex justify-center items-center h-64">
+//         <p>Loading performance data...</p>
+//       </div>
+//     );
+//   }
+
+//   // Calculate final values
+//   const overallValue = overallPerformance.length > 0 ? overallPerformance[overallPerformance.length - 1].value : 0;
+//   const overallGrowth = overallValue - 100; // Assuming started at $100
+//   const overallGrowthPercent = Math.round((overallGrowth / 100) * 100 * 10) / 10; // One decimal place
+  
+//   const lastTenValue = lastTenTrades.length > 0 ? lastTenTrades[lastTenTrades.length - 1].value : 0;
+//   const yearValue = yearPerformance.length > 0 ? yearPerformance[yearPerformance.length - 1].value : 0;
+//   const yearPercentage = Math.round((yearValue / 100) * 100 * 10) / 10; // One decimal place
+
+//   return (
+//     <div className="space-y-6">
+//       {/* Overall Performance Card */}
+//       <div className="bg-white p-4 rounded-lg border">
+//         <div className="flex justify-between items-start mb-2">
+//           <div>
+//             <h3 className="text-lg font-semibold">Overall performance</h3>
+//             <p className="text-sm text-gray-500">Shows the growth of $100 since subscription started</p>
+//           </div>
+//           <div className="text-right">
+//             <span className="text-3xl font-bold">234</span>
+//             <span className="text-sm text-green-500 ml-1">↗ 84.5%</span>
+//             <p className="text-xs text-gray-500">XIRR</p>
+//           </div>
+//         </div>
+        
+//         <div className="h-40 mt-4">
+//           <ResponsiveContainer width="100%" height="100%">
+//             <LineChart data={overallPerformance}>
+//               <Line 
+//                 type="monotone" 
+//                 dataKey="value" 
+//                 stroke="#8884d8" 
+//                 strokeWidth={2} 
+//                 dot={false} 
+//               />
+//               <XAxis 
+//                 dataKey="date" 
+//                 tickFormatter={(date) => date.substring(0, 4)}
+//                 interval="preserveStartEnd"
+//                 tick={{ fontSize: 12 }}
+//               />
+//               <YAxis hide />
+//             </LineChart>
+//           </ResponsiveContainer>
+//         </div>
+//         {/* X-axis labels */}
+//         <div className="flex justify-between mt-2 text-xs text-gray-500">
+//           <span>2023</span>
+//           <span>2024</span>
+//           <span>2025</span>
+//         </div>
+//       </div>
+      
+//       {/* Performance Metrics Row */}
+//       <div className="grid grid-cols-2 gap-4">
+//         {/* Last 10 Trades Performance */}
+//         <div className="bg-white p-4 rounded-lg border">
+//           <div className="flex justify-between mb-1">
+//             <h4 className="text-sm font-medium">Performance of last 10 trades</h4>
+//             {/* Trophy icon placeholder */}
+//             <div className="w-8 h-8 flex items-center justify-center">
+//               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+//                 <path d="M8 21H16M12 17V21M6 17H18M6 9V17H18V9M6 9C6 9 8 7 12 7C16 7 18 9 18 9M6 9V8C6 6.4 7.2 3 12 3C16.8 3 18 6.4 18 8V9" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+//               </svg>
+//             </div>
+//           </div>
+          
+//           <div className="flex items-center gap-1">
+//             <span className="text-xl font-bold">- $92</span>
+//             <span className="text-xs text-red-500">▼ 10%</span>
+//           </div>
+//           <p className="text-xs text-gray-500">Effect on portfolio</p>
+          
+//           <div className="h-16 mt-2">
+//             <ResponsiveContainer width="100%" height="100%">
+//               <LineChart data={lastTenTrades}>
+//                 <Line 
+//                   type="monotone" 
+//                   dataKey="value" 
+//                   stroke="#ff6b6b" 
+//                   strokeWidth={2} 
+//                   dot={false} 
+//                 />
+//               </LineChart>
+//             </ResponsiveContainer>
+//           </div>
+//         </div>
+        
+//         {/* Performance This Year */}
+//         <div className="bg-white p-4 rounded-lg border">
+//           <div className="flex justify-between mb-1">
+//             <h4 className="text-sm font-medium">Performance this year</h4>
+//             <Info className="w-4 h-4 text-gray-400" />
+//           </div>
+          
+//           <div className="flex items-center gap-1">
+//             <span className="text-xl font-bold">$111.42</span>
+//             <span className="text-xs text-green-500">▲ 2%</span>
+//           </div>
+//           <p className="text-xs text-gray-500">last year (this mth)</p>
+          
+//           <div className="h-16 mt-2">
+//             <ResponsiveContainer width="100%" height="100%">
+//               <LineChart data={yearPerformance}>
+//                 <Line 
+//                   type="monotone" 
+//                   dataKey="value" 
+//                   stroke="#4ade80" 
+//                   strokeWidth={2} 
+//                   dot={false} 
+//                 />
+//               </LineChart>
+//             </ResponsiveContainer>
+//           </div>
+//         </div>
+//       </div>
+      
+//       {/* Note */}
+//       <p className="text-xs text-gray-500 text-center mt-2">
+//         Note: Returns are calculated on exited trades only
+//       </p>
+//     </div>
+//   );
+// };
+
+// TradesTab Component
+const TradesTab = ({ clientId }: { clientId: number }) => {
   const [latestClientTrades, setLatestClientTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [segmentFilter, setSegmentFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { session } = useSession();
 
-  // Inside your ClientSidePanel component
-useEffect(() => {
-  const fetchLatestClientTrades = async () => {
-    const supabase = await createClerkSupabaseClient(session);
-    setLoading(true);
-    
-    try {
-      // Fetch all trade data for the specific client
-      const { data, error } = await supabase
-        .from("user_trades")
-        .select("*")
-        .eq("user_id", client.id)
-        .order("created_at", { ascending: false });
+  useEffect(() => {
+    const fetchLatestClientTrades = async () => {
+      const supabase = await createClerkSupabaseClient(session);
+      setLoading(true);
       
-      if (error) throw error;
-      
-      if (!data || data.length === 0) {
-        setLatestClientTrades([]);
-        setLoading(false);
-        return;
-      }
-      
-      // Process trade data to get all unique trades with their latest version
-      const uniqueTradesMap = new Map<string, Trade>();
-      
-      data.forEach(row => {
-        if (row.trade_data && Array.isArray(row.trade_data)) {
-          row.trade_data.forEach(tradeData => {
-            // Use stock as a unique identifier for trades
-            // You might need a more specific identifier if stock alone isn't enough
-            const tradeKey = tradeData.stock;
-            
-            // If we haven't seen this trade before, or this version is newer than what we have
-            if (!uniqueTradesMap.has(tradeKey) || 
-                new Date(tradeData.createdAt) > new Date(uniqueTradesMap.get(tradeKey)!.createdAt)) {
-              uniqueTradesMap.set(tradeKey, {
-                ...tradeData,
-                id: row.id,
-                rowId: row.id,
-                advisorId: row.advisor_id,
-                userId: row.user_id
-              });
-            }
-          });
+      try {
+        // Fetch all trade data for the specific client
+        const { data, error } = await supabase
+          .from("user_trades")
+          .select("*")
+          .eq("user_id", clientId)
+          .order("created_at", { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+          setLatestClientTrades([]);
+          setLoading(false);
+          return;
         }
-      });
-      
-      // Convert map to array of trades
-      let trades = Array.from(uniqueTradesMap.values());
-      
-      // Apply filters
-      if (segmentFilter !== "all") {
-        trades = trades.filter(trade => trade.segment === segmentFilter);
+        
+        // Process trade data to get all unique trades with their latest version
+        const uniqueTradesMap = new Map<string, Trade>();
+        
+        data.forEach(row => {
+          if (row.trade_data && Array.isArray(row.trade_data)) {
+            row.trade_data.forEach(tradeData => {
+              // Use stock as a unique identifier for trades
+              // You might need a more specific identifier if stock alone isn't enough
+              const tradeKey = tradeData.stock;
+              
+              // If we haven't seen this trade before, or this version is newer than what we have
+              if (!uniqueTradesMap.has(tradeKey) || 
+                  new Date(tradeData.createdAt) > new Date(uniqueTradesMap.get(tradeKey)!.createdAt)) {
+                uniqueTradesMap.set(tradeKey, {
+                  ...tradeData,
+                  id: row.id,
+                  rowId: row.id,
+                  advisorId: row.advisor_id,
+                  userId: row.user_id
+                });
+              }
+            });
+          }
+        });
+        
+        // Convert map to array of trades
+        let trades = Array.from(uniqueTradesMap.values());
+        
+        // Apply filters
+        if (segmentFilter !== "all") {
+          trades = trades.filter(trade => trade.segment === segmentFilter);
+        }
+        
+        if (statusFilter !== "all") {
+          trades = trades.filter(trade => trade.status === statusFilter);
+        }
+        
+        // Sort by created date, newest first
+        trades.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+        setLatestClientTrades(trades);
+      } catch (error) {
+        console.error("Error fetching client trades:", error);
+      } finally {
+        setLoading(false);
       }
-      
-      if (statusFilter !== "all") {
-        trades = trades.filter(trade => trade.status === statusFilter);
-      }
-      
-      // Sort by created date, newest first
-      trades.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
-      setLatestClientTrades(trades);
-    } catch (error) {
-      console.error("Error fetching client trades:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchLatestClientTrades();
-}, [client.id, session, segmentFilter, statusFilter]);
+    fetchLatestClientTrades();
+  }, [clientId, session, segmentFilter, statusFilter]);
 
   return (
-    <div className="fixed right-0 top-0 h-screen w-108 bg-white shadow-lg p-6 border-l overflow-y-auto border-gray-200 border-rounded-lg">
-      {/* Header */}
-      {/* Header with Client Info & Close Button */}
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-xl font-bold">{client.name}</h2>
-          <div className="flex space-x-2 mt-1">
-            <Badge className="bg-purple-100 text-purple-700">
-              {client.plan.toUpperCase()}
-            </Badge>
-            <Badge className="bg-green-100 text-green-700">
-              {client.risk.toUpperCase()}
-            </Badge>
-          </div>
-        </div>
-        <Button variant="ghost" onClick={onClose}>
-          <X className="h-5 w-5" />
-        </Button>
-      </div>
-
-      {/* Navigation Tabs */}
-      <Tabs defaultValue="trades">
-        <TabsList className="flex justify-between border-b pb-2 mb-4">
-          <TabsTrigger value="return">Return</TabsTrigger>
-          <TabsTrigger value="trades">Trades</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="calls">Call Logs</TabsTrigger>
-          <TabsTrigger value="document">Documents</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
+    <div>
       {/* Filters */}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
         <div className="flex flex-wrap gap-4">
@@ -402,6 +605,85 @@ useEffect(() => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+// Timeline Tab placeholder
+const TimelineTab = () => (
+  <div className="p-4 text-center">
+    <p>Timeline content will be displayed here</p>
+  </div>
+);
+
+// Call Logs Tab placeholder
+const CallLogsTab = () => (
+  <div className="p-4 text-center">
+    <p>Call logs will be displayed here</p>
+  </div>
+);
+
+// Documents Tab placeholder
+const DocumentsTab = () => (
+  <div className="p-4 text-center">
+    <p>Documents will be displayed here</p>
+  </div>
+);
+
+const ClientSidePanel: React.FC<ClientSidePanelProps> = ({ client, onClose }) => {
+  const [activeTab, setActiveTab] = useState("return");
+  const { session } = useSession();
+
+  return (
+    <div className="fixed right-0 top-0 h-screen w-108 bg-white shadow-lg p-6 border-l overflow-y-auto border-gray-200 border-rounded-lg">
+      {/* Header with Client Info & Close Button */}
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-xl font-bold">{client.name}</h2>
+          <div className="flex space-x-2 mt-1">
+            <Badge className="bg-purple-100 text-purple-700">
+              {client.plan.toUpperCase()}
+            </Badge>
+            <Badge className="bg-green-100 text-green-700">
+              {client.risk.toUpperCase()}
+            </Badge>
+          </div>
+        </div>
+        <Button variant="ghost" onClick={onClose}>
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* Navigation Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="flex justify-between border-b pb-2 mb-4">
+          <TabsTrigger value="return">Return</TabsTrigger>
+          <TabsTrigger value="trades">Trades</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="calls">Call Logs</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="return">
+          <ClientReturnsPerformance clientId={client.id} />
+        </TabsContent>
+        
+        <TabsContent value="trades">
+          <TradesTab clientId={client.id} />
+        </TabsContent>
+        
+        <TabsContent value="timeline">
+          <TimelineTab />
+        </TabsContent>
+        
+        <TabsContent value="calls">
+          <CallLogsTab />
+        </TabsContent>
+        
+        <TabsContent value="documents">
+          <DocumentsTab />
+        </TabsContent>
+      </Tabs>
 
       {/* Action Buttons */}
       <div className="flex justify-between mt-4">

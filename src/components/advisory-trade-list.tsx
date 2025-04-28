@@ -32,15 +32,12 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
 
   const fetchClientNames = async () => {
     try {
-      // Check if session exists
       if (!session) {
         console.error("No session available");
         return;
       }
   
       const supabase = await createClerkSupabaseClient(session);
-      const advisorId = session.user.id; // Get current advisor's ID
-  
       const { data, error } = await supabase
         .from("client3")
         .select("id, name")
@@ -57,19 +54,17 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
       console.error("Error fetching client names:", error);
     }
   };
+
   const fetchTrades = async () => {
-    setLoading(true);
     setLoading(true);
     try {
       const supabase = await createClerkSupabaseClient(session);
       
-      // First fetch the rows with the current advisor's ID
       let query = supabase
         .from("user_trades")
         .select("*")
-        .eq("advisor_id", session.user.id); // Filter by current advisor's ID
+        .eq("advisor_id", session.user.id);
   
-      // If clientId is provided, additionally filter by it
       if (clientId) {
         query = query.eq("user_id", clientId);
       }
@@ -88,7 +83,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
         return;
       }
   
-      // Process trade data to get all unique trades with their latest version
       const uniqueTradesMap = new Map<string, Trade>();
       
       data.forEach((row, rowIndex) => {
@@ -120,7 +114,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
       
       let allTrades = Array.from(uniqueTradesMap.values());
       
-      // Apply filters
       let filteredTrades = allTrades;
       
       if (segmentFilter !== "all") {
@@ -148,12 +141,11 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
       const { data, error } = await supabase
         .from("user_trades")
         .update({ trade_data: updatedTrade.trade_data })
-        .eq("id", updatedTrade.rowId) // Using rowId instead of id to match the correct database row
+        .eq("id", updatedTrade.rowId)
         .select()
 
       if (error) throw error
 
-      // Update trades in local state
       setTrades(trades.map((t) => (t.id === updatedTrade.id ? { ...t, ...updatedTrade } : t)))
       return Promise.resolve()
     } catch (error) {
@@ -165,18 +157,14 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
   const handleTradeExit = async (tradeId: number, exitData: any) => {
     try {
       const supabase = await createClerkSupabaseClient(session)
-
-      // Find the trade to update
       const tradeToUpdate = trades.find((trade) => trade.id === tradeId)
 
       if (!tradeToUpdate) {
         throw new Error("Trade not found")
       }
 
-      // Find the database row that contains this trade
       const rowId = tradeToUpdate.rowId;
 
-      // Get the current row data first
       const { data: currentRowData, error: fetchError } = await supabase
         .from("user_trades")
         .select("trade_data")
@@ -185,9 +173,7 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
 
       if (fetchError) throw fetchError;
 
-      // Update the specific trade within the trade_data array
       const updatedTradeDataArray = currentRowData.trade_data.map((trade: any) => {
-        // Match the trade by comparing relevant fields
         if (trade.stock === tradeToUpdate.stock && 
             trade.tradeType === tradeToUpdate.tradeType && 
             trade.createdAt === tradeToUpdate.createdAt) {
@@ -204,7 +190,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
         return trade;
       });
 
-      // Update the row with the modified trade_data array
       const { error: updateError } = await supabase
         .from("user_trades")
         .update({ trade_data: updatedTradeDataArray })
@@ -212,7 +197,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
 
       if (updateError) throw updateError;
 
-      // Update local state
       setTrades(trades.map((trade) => 
         trade.id === tradeId 
           ? { 
@@ -221,7 +205,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
               exitPrice: exitData.exitPrice,
               exitDate: exitData.exitDate,
               exitReason: exitData.exitReason,
-              pnl: exitData.pnl,
               updatedAt: new Date().toISOString(),
             } 
           : trade
@@ -236,7 +219,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
 
   return (
     <div className="w-full">
-      {/* Action Button */}
       {clientId && (
         <div className="flex justify-end mb-4">
           <Button
@@ -248,7 +230,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
         </div>
       )}
 
-      {/* New Trade Form */}
       {showNewTradeForm && clientId && (
         <NewTradeForm
           clientId={clientId}
@@ -259,7 +240,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
         />
       )}
 
-      {/* Trades List */}
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <p>Loading trades...</p>
