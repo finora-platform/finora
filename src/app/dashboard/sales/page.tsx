@@ -27,9 +27,10 @@ export default function Sales() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { session, isLoaded: isSessionLoaded } = useSession()
+  const [isLeadsDataEmpty, setIsLeadsDataEmpty] = useState(false)
   const { user, isLoaded: isUserLoaded } = useUser()
 
-  const plans = ["All Plans", "Free", "Basic", "Premium", "Enterprise"]
+  const plans = ["All Plans", "Basic", "Premium", "Enterprise"]
   const qualities = ["All Lead quality", "Cold", "Warm", "Hot"]
   const boardRef = useRef<HTMLDivElement | null>(null)
 
@@ -59,9 +60,11 @@ export default function Sales() {
         setLoading(false)
       }
     }
-
     fetchLeads()
   }, [isSessionLoaded, isUserLoaded, session])
+
+  console.log("All leads:", allLeads)
+  console.log("Filtered leads:", filteredLeads)
 
   const sources = ["All Sources", ...new Set(allLeads.map((lead) => lead.source))]
 
@@ -127,14 +130,26 @@ export default function Sales() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-full bg-background border rounded-xl">
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="border-b p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FilterDropdown options={plans} value={filters.plan} onChange={(value) => setFilters({ ...filters, plan: value })} />
-              <FilterDropdown options={sources} value={filters.source} onChange={(value) => setFilters({ ...filters, source: value })} />
-              <FilterDropdown options={qualities} value={filters.quality} onChange={(value) => setFilters({ ...filters, quality: value })} />
+              <FilterDropdown
+                options={plans}
+                value={filters.plan}
+                onChange={(value) => setFilters({ ...filters, plan: value })}
+              />
+              <FilterDropdown
+                options={sources}
+                value={filters.source}
+                onChange={(value) => setFilters({ ...filters, source: value })}
+              />
+              <FilterDropdown
+                options={qualities}
+                value={filters.quality}
+                onChange={(value) => setFilters({ ...filters, quality: value })}
+              />
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -151,7 +166,9 @@ export default function Sales() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Leads imported live</span>
+              <span className="text-sm text-muted-foreground">
+                Leads imported live
+              </span>
               <Button onClick={() => setIsDialogOpen(true)}>
                 <Download className="h-4 w-4 mr-2" />
                 Import leads
@@ -160,46 +177,126 @@ export default function Sales() {
           </div>
         </header>
 
-        <div 
-          className="flex-1 overflow-auto p-4" 
+        <div
+          className="flex-1 overflow-auto p-4"
           ref={boardRef}
           style={{ overflowY: "auto" }}
         >
-          <div className="grid grid-cols-4 gap-4 min-h-full">
-  <LeadStage
-    title="Leads"
-    leads={leadsStage}
-    count={leadsStage.length}
-    onLeadClick={setSelectedLead}
-  />
-  <LeadStage
-    title="Contacted"
-    leads={calledStage}
-    count={calledStage.length}
-    onLeadClick={setSelectedLead}
-  />
-  <LeadStage
-    title="Documented"
-    leads={subscribedStage}
-    count={subscribedStage.length}
-    onLeadClick={setSelectedLead}
-  />
-
-  {/* Paid column: greyed-out + no pointer events */}
-  <div className="bg-gray-50 rounded-lg p-2 pointer-events-none opacity-60">
-    <LeadStage
-      title="Paid"
-      leads={onboardedStage}
-      count={onboardedStage.length}
-      onLeadClick={setSelectedLead}
-    />
-  </div>
-</div>
-
+          {!isLeadsDataEmpty && <div className="grid grid-cols-4 gap-4 min-h-full">
+            <LeadStage
+              title="Leads"
+              leads={leadsStage}
+              count={leadsStage.length}
+              onLeadClick={setSelectedLead}
+            />
+            <LeadStage
+              title="Called"
+              leads={calledStage}
+              count={calledStage.length}
+              onLeadClick={setSelectedLead}
+            />
+            <LeadStage
+              title="Subscribed"
+              leads={subscribedStage}
+              count={subscribedStage.length}
+              onLeadClick={setSelectedLead}
+            />
+            <LeadStage
+              title="Onboarded"
+              leads={onboardedStage}
+              count={onboardedStage.length}
+              onLeadClick={setSelectedLead}
+            />
+          </div>}
+          {isLeadsDataEmpty && (
+            <div
+              className="h-[94%] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md relative"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.add("border-blue-500", "bg-blue-50");
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.remove(
+                  "border-blue-500",
+                  "bg-blue-50"
+                );
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.remove(
+                  "border-blue-500",
+                  "bg-blue-50"
+                );
+                const files = Array.from(e.dataTransfer.files);
+                const acceptedTypes = [
+                  "text/csv",
+                  "application/vnd.ms-excel",
+                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ];
+                const filteredFiles = files.filter((file) =>
+                  acceptedTypes.includes(file.type)
+                );
+                if (filteredFiles.length === 0) {
+                  alert("Only CSV and Excel files are accepted.");
+                  return;
+                }
+                // Handle accepted files here
+                console.log("Dropped files:", filteredFiles);
+              }}
+            >
+              <input
+                type="file"
+                id="fileInput"
+                accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = e.target.files
+                    ? Array.from(e.target.files)
+                    : [];
+                  const acceptedTypes = [
+                    "text/csv",
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                  ];
+                  const filteredFiles = files.filter((file) =>
+                    acceptedTypes.includes(file.type)
+                  );
+                  if (filteredFiles.length === 0) {
+                    alert("Only CSV and Excel files are accepted.");
+                    return;
+                  }
+                  // Handle accepted files here
+                  console.log("Selected files:", filteredFiles);
+                }}
+              />
+              <Button
+                onClick={() => {
+                  setIsDialogOpen(true);
+                }}
+                className="mb-4"
+              >
+                Add Existing Leads
+              </Button>
+              <p className="text-muted-foreground">
+                Drag and drop CSV or Excel files here, or click the button to
+                select files.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {selectedLead && <LeadDetailPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />}
+      {selectedLead && (
+        <LeadDetailPanel
+          lead={selectedLead}
+          onClose={() => setSelectedLead(null)}
+        />
+      )}
       <LeadCSVImportDialog show={isDialogOpen} setShow={setIsDialogOpen} />
     </div>
   )

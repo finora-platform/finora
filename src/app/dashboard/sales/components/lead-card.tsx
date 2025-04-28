@@ -1,6 +1,6 @@
 "use client"
 import { Card, CardContent } from "@/components/ui/card"
-import type { Lead } from "@/types/lead"
+import type { Lead } from "../types/lead"
 import { ExternalLink, Star, FileCheck, FileWarning } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -183,10 +183,10 @@ export const LeadCard = ({ lead, onClick }: LeadCardProps) => {
                   <span>{lead.views}</span>
                 </div>
               )}
-              {lead.messages > 0 && (
+              {lead.messages && lead.messages.length > 0 && (
                 <div className="flex items-center gap-1">
                   <span>💬</span>
-                  <span>{lead.messages}</span>
+                  <span>{lead.messages.length}</span>
                 </div>
               )}
             </div>

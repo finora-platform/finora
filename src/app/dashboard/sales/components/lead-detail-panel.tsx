@@ -11,6 +11,7 @@ import { ChatInterface } from "./chat-interface"
 import { createClerkSupabaseClient } from "@/utils/supabaseClient"
 import { useSession } from "@clerk/nextjs"
 
+
 interface LeadDetailPanelProps {
   lead: Lead
   onClose: () => void
