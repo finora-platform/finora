@@ -2,7 +2,7 @@ export interface Lead {
   id: string
   name: string
   source: string
-  stage: "lead" | "called" | "subscribed" | "onboarded"
+  stage: "lead" | "contacted" | "documented" | "paid"
   updated_at: string
   created_at: string
   onboarding_date?: string

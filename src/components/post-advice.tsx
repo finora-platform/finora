@@ -112,6 +112,7 @@ export default function PostAdviceForm({
           .from("client3")
           .select("id, name, email, whatsapp, assigned_rn, risk, ekyc_status, plan")
           .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,assigned_rn.ilike.%${searchQuery}%,risk.ilike.%${searchQuery}%,plan.ilike.%${searchQuery}%`)
+          .eq("advisor_id", session.user.id)// Filter by current advisor's ID
           .limit(40);
         
         if (!error) {
