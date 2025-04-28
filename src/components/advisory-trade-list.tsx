@@ -183,7 +183,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
             exitPrice: exitData.exitPrice,
             exitDate: exitData.exitDate,
             exitReason: exitData.exitReason,
-            pnl: exitData.pnl,
             updatedAt: new Date().toISOString(),
           };
         }
@@ -196,7 +195,6 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
         .eq("id", rowId);
 
       if (updateError) throw updateError;
-
       setTrades(trades.map((trade) => 
         trade.id === tradeId 
           ? { 
@@ -205,6 +203,7 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
               exitPrice: exitData.exitPrice,
               exitDate: exitData.exitDate,
               exitReason: exitData.exitReason,
+              pnl: exitData.pnl,
               updatedAt: new Date().toISOString(),
             } 
           : trade
