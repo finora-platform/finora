@@ -243,6 +243,7 @@ export default function LeadCSVUpload({ open, onOpenChange }: LeadCSVUploadProps
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           metadata: Object.keys(metadataObj).length > 0 ? metadataObj : row.metadata || null,
+          advisor_id:session.user.id,
         };
       });
 

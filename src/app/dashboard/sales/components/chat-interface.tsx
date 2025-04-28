@@ -9,25 +9,25 @@ import { Send, Paperclip, FileText } from "lucide-react"
 
 interface ChatInterfaceProps {
   messages: Message[]
+  stage: string
+  onSendProfileForm: () => Promise<void>
+  onSendPaymentLink: () => Promise<void>
 }
 
 /**
- * Renders a chat interface for sales lead communication.
- *
- * Displays a list of messages and provides controls for sending new messages, payment links,
- * uploading documents, and using message templates. Manages its own chat state and supports
- * sending messages via button or Enter key.
- *
- * @component
- * @param {ChatInterfaceProps} props - The props for the chat interface.
- * @param {Message[]} props.messages - Initial array of chat messages to display.
- *
- * @example
- * <ChatInterface messages={[{ content: "Hello!", time: "09:00 AM", isOutgoing: false }]} />
+ * Renders a chat interface for lead communication with conditional actions
+ * based on lead stage.
  */
-export const ChatInterface = ({ messages = [] }: ChatInterfaceProps) => {
+export const ChatInterface = ({ 
+  messages = [], 
+  stage,
+  onSendProfileForm,
+  onSendPaymentLink
+}: ChatInterfaceProps) => {
   const [newMessage, setNewMessage] = useState("")
   const [chatMessages, setChatMessages] = useState<Message[]>(messages)
+  const [isSendingForm, setIsSendingForm] = useState(false)
+  const [isSendingPayment, setIsSendingPayment] = useState(false)
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return
@@ -48,6 +48,26 @@ export const ChatInterface = ({ messages = [] }: ChatInterfaceProps) => {
       handleSendMessage()
     }
   }
+
+  const handleProfileFormClick = async () => {
+    setIsSendingForm(true)
+    try {
+      await onSendProfileForm()
+    } finally {
+      setIsSendingForm(false)
+    }
+  }
+
+  const handlePaymentLinkClick = async () => {
+    setIsSendingPayment(true)
+    try {
+      await onSendPaymentLink()
+    } finally {
+      setIsSendingPayment(false)
+    }
+  }
+
+  const isContactedOrLater = ["contacted", "documented", "paid"].includes(stage)
 
   return (
     <div className="flex flex-col h-full">
@@ -74,17 +94,35 @@ export const ChatInterface = ({ messages = [] }: ChatInterfaceProps) => {
 
       <div className="p-4 border-t">
         <div className="flex gap-2 mb-2">
-          <Button variant="outline" size="sm">
-            <span className="mr-1">₹</span>
-            Payment link
+          <Button 
+            variant="outline" 
+            size="sm"
+            disabled={!isContactedOrLater || isSendingPayment}
+            onClick={handlePaymentLinkClick}
+          >
+            {isSendingPayment ? (
+              "Sending..."
+            ) : (
+              <>
+                <span className="mr-1">₹</span>
+                Payment link
+              </>
+            )}
           </Button>
-          <Button variant="outline" size="sm">
-            <Paperclip className="h-4 w-4 mr-1" />
-            Upload document
-          </Button>
-          <Button variant="outline" size="sm">
-            <FileText className="h-4 w-4 mr-1" />
-            Templates
+          <Button 
+            variant="outline" 
+            size="sm"
+            disabled={!isContactedOrLater || isSendingForm}
+            onClick={handleProfileFormClick}
+          >
+            {isSendingForm ? (
+              "Sending..."
+            ) : (
+              <>
+                <Paperclip className="h-4 w-4 mr-1" />
+                Profile Form
+              </>
+            )}
           </Button>
         </div>
 
@@ -96,7 +134,11 @@ export const ChatInterface = ({ messages = [] }: ChatInterfaceProps) => {
             onKeyDown={handleKeyDown}
             className="flex-1"
           />
-          <Button size="icon" disabled={!newMessage.trim()} onClick={handleSendMessage}>
+          <Button 
+            size="icon" 
+            disabled={!newMessage.trim()} 
+            onClick={handleSendMessage}
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>
