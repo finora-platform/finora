@@ -46,9 +46,15 @@ export default function Sales() {
           .from("leads")
           .select("*")
           .order("updated_at", { ascending: true })
+          .eq("advisor_id", session.user.id)
 
         if (error) {
           throw error
+        }
+        if (data.length === 0) {
+          setIsLeadsDataEmpty(true)
+        } else {
+          setIsLeadsDataEmpty(false)
         }
         setAllLeads(data as Lead[])
         setFilteredLeads(data as Lead[])

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Lead } from "../types/lead";
-import { X, Phone, Check, CheckCircle, Upload, FileText } from "lucide-react";
+import { Phone, Check, CheckCircle, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -27,6 +27,8 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
   const [contractUploaded, setContractUploaded] = useState(false);
   const [complianceConfirmed, setComplianceConfirmed] = useState(false);
   const { session } = useSession();
+
+  console.log("Lead Detail Panel", lead);
 
   const handleMarkAsCalled = async () => {
     if (!window.confirm("Have you called this lead?")) return;
@@ -150,9 +152,6 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-1 border-b">
             <DialogTitle className="text-base font-medium">{lead.name}</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
           </div>
 
           {/* Status display */}
@@ -187,7 +186,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
               </Button>
             </div>
           ) : isLeadStage ? (
-            <div className="flex items-center gap-2 border border-yellow-500 rounded-md p-2 m-2">
+            <div className="flex items-center gap-2 border p-2 m-2">
               <select 
                 className="border rounded px-2 py-1 text-sm flex-1"
                 value={disposition}
@@ -212,7 +211,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
 
               <Button 
                 variant="outline" 
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 "
                 onClick={handleMarkAsCalled}
               >
                 <Phone className="h-4 w-4" />
@@ -221,7 +220,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
             </div>
           ) : null}
 
-          <Tabs defaultValue="activity" className="flex-1 flex flex-col overflow-hidden">
+          <Tabs defaultValue="activity" className="overflow-hidden">
             <TabsList className="grid grid-cols-5 border-b bg-transparent p-0">
               <TabsTrigger value="activity">Activity</TabsTrigger>
               <TabsTrigger value="chat" className="relative">
