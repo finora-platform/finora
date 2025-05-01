@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect, useRef } from "react";
 import { createClerkSupabaseClient } from "@/utils/supabaseClient";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, SendHorizonal } from "lucide-react";
 import { useSession } from "@clerk/nextjs";
 
 type Client = {
@@ -37,6 +37,15 @@ type TradeData = {
   rangeTarget: boolean;
   status: "ACTIVE" | "COMPLETED";
   createdAt: string;
+};
+
+// Utility function to generate WhatsApp link
+const getWhatsAppLink = (phone: string, message: string = "") => {
+  // Remove any non-digit characters and leading zeros
+  const cleanedPhone = phone.replace(/\D/g, '').replace(/^0+/, '');
+  // URL encode the message
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${cleanedPhone}?text=${encodedMessage}`;
 };
 
 export default function PostAdviceForm({ 
@@ -73,6 +82,16 @@ export default function PostAdviceForm({
   const [availablePlans, setAvailablePlans] = useState<Array<{name: string, count: number}>>([]);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [showPlanSelector, setShowPlanSelector] = useState(false);
+
+  // Generate default WhatsApp message
+  const getDefaultMessage = (client: Client) => {
+    return `Hi ${client.name},\n\nHere's your trade advice for ${selectedStock}:\n\n` +
+           `Trade: ${tradeType}\n` +
+           `Entry: ${entryPrice}\n` +
+           `Stop Loss: ${stoplossPrice}\n` +
+           `Targets: ${targetPrices.replace(/,/g, ", ")}\n\n` +
+           `Regards,\n${session?.user?.firstName || "Your Advisor"}`;
+  };
 
   // Fetch available plans
   useEffect(() => {
@@ -112,7 +131,7 @@ export default function PostAdviceForm({
           .from("client3")
           .select("id, name, email, whatsapp, assigned_rn, risk, ekyc_status, plan")
           .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,assigned_rn.ilike.%${searchQuery}%,risk.ilike.%${searchQuery}%,plan.ilike.%${searchQuery}%`)
-          .eq("advisor_id", session.user.id)// Filter by current advisor's ID
+          // .eq("advisor_id", session.user.id)
           .limit(40);
         
         if (!error) {
@@ -136,7 +155,7 @@ export default function PostAdviceForm({
       .from("client3")
       .select("id, name, email, whatsapp, assigned_rn, risk, ekyc_status, plan")
       .eq("plan", plan)
-      .eq("advisor_id", session.user.id)// Filter by current advisor's ID
+      .eq("advisor_id", session.user.id)
       .limit(100);
     
     if (!error && data) {
@@ -166,6 +185,26 @@ export default function PostAdviceForm({
   const handlePlanSelect = (plan: string) => {
     fetchClientsByPlan(plan);
     setShowPlanSelector(false);
+  };
+
+  // Get the appropriate WhatsApp URL based on selected clients
+  const getWhatsAppUrl = () => {
+    if (activeTab === "individual" && selectedClient?.whatsapp) {
+      return getWhatsAppLink(selectedClient.whatsapp, getDefaultMessage(selectedClient));
+    } else if (activeTab === "plan" && selectedClients.length > 0) {
+      // Find first client with WhatsApp number
+      const clientWithWhatsApp = selectedClients.find(client => client.whatsapp);
+      if (clientWithWhatsApp) {
+        const message = `Hi Team,\n\nHere's trade advice for ${selectedStock}:\n\n` +
+                       `Trade: ${tradeType}\n` +
+                       `Entry: ${entryPrice}\n` +
+                       `Stop Loss: ${stoplossPrice}\n` +
+                       `Targets: ${targetPrices.replace(/,/g, ", ")}\n\n` +
+                       `(Sent to ${selectedClients.length} clients)`;
+        return getWhatsAppLink(clientWithWhatsApp.whatsapp, message);
+      }
+    }
+    return null;
   };
 
   const handleSubmit = async () => {
@@ -198,7 +237,7 @@ export default function PostAdviceForm({
       };
   
       // Get clients to notify based on active tab
-      let clientsToNotify: ClientType[] = [];
+      let clientsToNotify: Client[] = [];
       
       if (activeTab === "individual") {
         if (selectedClient) {
@@ -206,16 +245,6 @@ export default function PostAdviceForm({
         }
       } else if (activeTab === "plan") {
         if (selectedPlan) {
-          // Fetch all clients associated with the selected plan
-          const { data: planClients, error } = await supabase
-            .from("plan_clients") // or whatever your join table is called
-            .select("client_id, clients(*)") // adjust based on your schema
-            .eq("plan_id", selectedPlan.id);
-          
-          if (error) throw error;
-          
-          clientsToNotify = planClients.map(pc => pc.clients);
-        } else if (selectedClients.length > 0) {
           clientsToNotify = selectedClients;
         }
       }
@@ -268,6 +297,12 @@ export default function PostAdviceForm({
   
       await Promise.all(promises);
   
+      // Open WhatsApp after successful submission
+      const whatsappUrl = getWhatsAppUrl();
+      if (whatsappUrl) {
+        window.open(whatsappUrl, '_blank');
+      }
+  
       // Reset form
       setEntryPrice("");
       setStoplossPrice("");
@@ -288,268 +323,281 @@ export default function PostAdviceForm({
   };
 
   return (
-    <Card className="max-w-lg w-full border rounded-xl shadow-lg p-4" ref={searchRef}>
-      <CardContent>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Post advice for {selectedStock}</h2>
+    <Card className="max-w-lg w-full border rounded-xl shadow-lg bg-white" ref={searchRef}>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-purple-800">{selectedStock ? `Trade Advice: ${selectedStock}` : 'New Trade Advice'}</h2>
         </div>
 
-        <div className="mb-4 ">
-          <Label>Trade Type</Label>
-          <RadioGroup 
-            value={tradeType} 
-            onValueChange={(value: "BUY" | "SELL") => setTradeType(value)}
-            className="flex gap-4 mt-1"
-          >
-            <Label className="flex items-center gap-2 ">
-              <RadioGroupItem value="BUY" /> BUY
-            </Label> 
-            <Label className="flex items-center gap-2">
-              <RadioGroupItem value="SELL" /> SELL
-            </Label>
-          </RadioGroup>
-        </div>
-
-        <div className="mb-4">
-          <Label>Segment</Label>
-          <RadioGroup 
-            value={segment} 
-            onValueChange={(value: "EQUITY" | "F&O" | "COMMODITIES") => setSegment(value)}
-            className="flex gap-4 mt-1"
-          >
-            <Label className="flex items-center gap-2">
-              <RadioGroupItem value="EQUITY" /> EQUITY
-            </Label> 
-            <Label className="flex items-center gap-2">
-              <RadioGroupItem value="F&O" /> F&O
-            </Label>
-            <Label className="flex items-center gap-2">
-              <RadioGroupItem value="COMMODITIES" /> COMMODITIES
-            </Label>
-          </RadioGroup>
-        </div>
-
-        <div className="mb-4">
-          <Label>Time horizon</Label>
-          <RadioGroup 
-            value={timeHorizon} 
-            onValueChange={(value: "INTRADAY" | "SWING" | "LONGTERM") => setTimeHorizon(value)}
-            className="flex gap-4 mt-1"
-          >
-            <Label className="flex items-center gap-2">
-              <RadioGroupItem value="INTRADAY" /> INTRADAY
-            </Label> 
-            <Label className="flex items-center gap-2">
-              <RadioGroupItem value="SWING" /> SWING
-            </Label>
-            <Label className="flex items-center gap-2">
-              <RadioGroupItem value="LONGTERM" /> LONGTERM
-            </Label>
-          </RadioGroup>
-        </div>
-
-        <div className="mb-4">
-          <Label>Entry</Label>
-          <div className="flex items-center gap-2 mt-1">
-            <Input 
-              type="text" 
-              placeholder="₹" 
-              className="flex-1" 
-              value={entryPrice}
-              onChange={(e) => setEntryPrice(e.target.value)}
-            />
-            <div className="flex items-center gap-2">
-              <Switch checked={rangeEntry} onCheckedChange={setRangeEntry} />
-              <Label>Range</Label>
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+            <div className="mb-4">
+              <Label className="text-sm font-medium text-gray-700 mb-1 block">Trade Type</Label>
+              <RadioGroup 
+                value={tradeType} 
+                onValueChange={(value: "BUY" | "SELL") => setTradeType(value)}
+                className="flex gap-6 mt-1"
+              >
+                <Label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="BUY" /> 
+                  <span className="text-green-700 font-medium">BUY</span>
+                </Label> 
+                <Label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="SELL" /> 
+                  <span className="text-red-700 font-medium">SELL</span>
+                </Label>
+              </RadioGroup>
             </div>
-          </div>
-        </div>
 
-        <div className="mb-4">
-          <Label>Stoploss</Label>
-          <div className="flex items-center gap-2 mt-1">
-            <Input 
-              type="text" 
-              placeholder="₹" 
-              className="flex-1" 
-              value={stoplossPrice}
-              onChange={(e) => setStoplossPrice(e.target.value)}
-            />
-            <div className="flex items-center gap-2">
-              <Switch checked={trailingSL} onCheckedChange={setTrailingSL} />
-              <Label>Trailing</Label>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <Label>Target(s)</Label>
-          <div className="flex items-center gap-2 mt-1">
-            <Input 
-              type="text" 
-              placeholder="₹ (comma separated for multiple)" 
-              className="flex-1" 
-              value={targetPrices}
-              onChange={(e) => setTargetPrices(e.target.value)}
-            />
-            <div className="flex items-center gap-2">
-              <Switch checked={rangeTarget} onCheckedChange={setRangeTarget} />
-              <Label>Range</Label>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="individual">Individual Client</TabsTrigger>
-              <TabsTrigger value="plan">Plan/Group</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="individual" className="mt-2">
-              <Label>Search Client</Label>
-              <Input 
-                type="text" 
-                placeholder="Search by name, email, or RN..." 
-                className="mt-1" 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setShowSearchResults(true)}
-              />
-              {showSearchResults && searchResults.length > 0 && (
-                <ul className="mt-2 border rounded p-2 max-h-60 overflow-y-auto">
-                  {searchResults.map((client) => (
-                    <li 
-                      key={client.id} 
-                      className="p-2 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => handleClientSelect(client)}
-                    >
-                      <div className="font-medium">{client.name}</div>
-                      <div className="text-sm text-gray-600">{client.email}</div>
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="outline">{client.assigned_rn || 'No RN'}</Badge>
-                        {client.plan && (
-                          <Badge variant="secondary">{client.plan}</Badge>
-                        )}
-                        <Badge variant={client.risk === "aggressive" ? "destructive" : "outline"}>
-                          {client.risk}
-                        </Badge>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              
-              {selectedClient && (
-                <div className="mt-2 p-2 border rounded">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium">{selectedClient.name}</span>
-                      {selectedClient.ekyc_status && (
-                        <Badge className="ml-2" variant={selectedClient.ekyc_status === "verified" ? "success" : "warning"}>
-                          {selectedClient.ekyc_status.toUpperCase()}
-                        </Badge>
-                      )}
-                    </div>
-                    <button 
-                      className="text-gray-500 hover:text-gray-700"
-                      onClick={() => setSelectedClient(null)}
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                  <div className="flex gap-2 mt-1">
-                    {selectedClient.plan && (
-                      <Badge variant="secondary">{selectedClient.plan}</Badge>
-                    )}
-                    <Badge variant={selectedClient.risk === "aggressive" ? "destructive" : "outline"}>
-                      {selectedClient.risk}
-                    </Badge>
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="plan" className="mt-2">
-              <div className="relative">
-                <Label>Select Plan/Group</Label>
-                <div 
-                  className="mt-1 p-2 border rounded flex items-center justify-between cursor-pointer"
-                  onClick={() => setShowPlanSelector(!showPlanSelector)}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-1 block">Segment</Label>
+                <RadioGroup 
+                  value={segment} 
+                  onValueChange={(value: "EQUITY" | "F&O" | "COMMODITIES") => setSegment(value)}
+                  className="flex flex-col gap-2 mt-1"
                 >
-                  <div>
-                    {selectedPlan ? (
-                      <div className="flex gap-2 items-center">
-                        <Badge variant="secondary">{selectedPlan}</Badge>
-                        <span className="text-gray-600">({selectedClients.length} clients)</span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">Select a plan</span>
-                    )}
-                  </div>
-                  <ChevronDown size={16} />
-                </div>
-                
-                {showPlanSelector && (
-                  <div className="absolute z-10 mt-1 w-full border rounded bg-white shadow-lg p-2 max-h-60 overflow-y-auto">
-                    <div className="mb-2 pb-2 border-b">
-                      <div className="font-medium">Subscription plans</div>
-                    </div>
-                    {availablePlans.map((plan) => (
-                      <div 
-                        key={plan.name}
-                        className="p-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
-                        onClick={() => handlePlanSelect(plan.name)}
-                      >
-                        <Checkbox checked={selectedPlan === plan.name} />
-                        <div>
-                          <div className="font-medium">{plan.name}</div>
-                          <div className="text-sm text-gray-600">{plan.count} clients</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <RadioGroupItem value="EQUITY" /> EQUITY
+                  </Label> 
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <RadioGroupItem value="F&O" /> F&O
+                  </Label>
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <RadioGroupItem value="COMMODITIES" /> COMMODITIES
+                  </Label>
+                </RadioGroup>
               </div>
               
-              {selectedClients.length > 0 && (
-                <div className="mt-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <Label>Selected Clients ({selectedClients.length})</Label>
-                  </div>
-                  <div className="border rounded p-2 max-h-40 overflow-y-auto">
-                    {selectedClients.slice(0, 5).map((client) => (
-                      <div key={client.id} className="flex items-center justify-between py-1 border-b last:border-b-0">
-                        <div>
-                          <span className="font-medium">{client.name}</span>
-                          {client.risk && (
-                            <Badge className="ml-2" variant={client.risk === "aggressive" ? "destructive" : "outline"}>
-                              {client.risk}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    {selectedClients.length > 5 && (
-                      <div className="text-center text-sm text-gray-500 mt-2">
-                        And {selectedClients.length - 5} more clients
-                      </div>
-                    )}
-                  </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-1 block">Time Horizon</Label>
+                <RadioGroup 
+                  value={timeHorizon} 
+                  onValueChange={(value: "INTRADAY" | "SWING" | "LONGTERM") => setTimeHorizon(value)}
+                  className="flex flex-col gap-2 mt-1"
+                >
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <RadioGroupItem value="INTRADAY" /> INTRADAY
+                  </Label> 
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <RadioGroupItem value="SWING" /> SWING
+                  </Label>
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <RadioGroupItem value="LONGTERM" /> LONGTERM
+                  </Label>
+                </RadioGroup>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+            <div className="mb-4">
+              <Label className="text-sm font-medium text-gray-700 mb-1 block">Entry Price</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Input 
+                  type="text" 
+                  placeholder="₹" 
+                  className="flex-1 bg-white" 
+                  value={entryPrice}
+                  onChange={(e) => setEntryPrice(e.target.value)}
+                />
+                <div className="flex items-center gap-2">
+                  <Switch checked={rangeEntry} onCheckedChange={setRangeEntry} />
+                  <Label className="cursor-pointer">Range</Label>
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <Label className="text-sm font-medium text-gray-700 mb-1 block">Stoploss</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Input 
+                  type="text" 
+                  placeholder="₹" 
+                  className="flex-1 bg-white" 
+                  value={stoplossPrice}
+                  onChange={(e) => setStoplossPrice(e.target.value)}
+                />
+                <div className="flex items-center gap-2">
+                  <Switch checked={trailingSL} onCheckedChange={setTrailingSL} />
+                  <Label className="cursor-pointer">Trailing</Label>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-1 block">Target(s)</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Input 
+                  type="text" 
+                  placeholder="₹ (comma separated for multiple)" 
+                  className="flex-1 bg-white" 
+                  value={targetPrices}
+                  onChange={(e) => setTargetPrices(e.target.value)}
+                />
+                <div className="flex items-center gap-2">
+                  <Switch checked={rangeTarget} onCheckedChange={setRangeTarget} />
+                  <Label className="cursor-pointer">Range</Label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="individual">Individual Client</TabsTrigger>
+                <TabsTrigger value="plan">Plan/Group</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="individual" className="mt-4">
+                <Label className="text-sm font-medium text-gray-700 mb-1 block">Search Client</Label>
+                <Input 
+                  type="text" 
+                  placeholder="Search by name, email, or RN..." 
+                  className="mt-1 bg-white" 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setShowSearchResults(true)}
+                />
+                {showSearchResults && searchResults.length > 0 && (
+                  <ul className="mt-2 border rounded bg-white p-2 max-h-60 overflow-y-auto z-10 absolute w-[calc(100%-2.5rem)]">
+                    {searchResults.map((client) => (
+                      <li 
+                        key={client.id} 
+                        className="p-2 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handleClientSelect(client)}
+                      >
+                        <div className="font-medium">{client.name}</div>
+                        <div className="text-sm text-gray-600">{client.email}</div>
+                        <div className="flex gap-2 mt-1">
+                          <Badge variant="outline">{client.assigned_rn || 'No RN'}</Badge>
+                          {client.plan && (
+                            <Badge variant="secondary">{client.plan}</Badge>
+                          )}
+                          <Badge variant={client.risk === "aggressive" ? "destructive" : "outline"}>
+                            {client.risk}
+                          </Badge>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                
+                {selectedClient && (
+                  <div className="mt-3 p-3 border rounded bg-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-medium">{selectedClient.name}</span>
+                        {selectedClient.ekyc_status && (
+                          <Badge className="ml-2" variant={selectedClient.ekyc_status === "verified" ? "success" : "warning"}>
+                            {selectedClient.ekyc_status.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
+                      <button 
+                        className="text-gray-500 hover:text-gray-700"
+                        onClick={() => setSelectedClient(null)}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <div className="flex gap-2 mt-1">
+                      {selectedClient.plan && (
+                        <Badge variant="secondary">{selectedClient.plan}</Badge>
+                      )}
+                      <Badge variant={selectedClient.risk === "aggressive" ? "destructive" : "outline"}>
+                        {selectedClient.risk}
+                      </Badge>
+                      <Badge variant="outline">{selectedClient.assigned_rn || 'No RN'}</Badge>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="plan" className="mt-4">
+                <div className="relative">
+                  <Label className="text-sm font-medium text-gray-700 mb-1 block">Select Plan/Group</Label>
+                  <div 
+                    className="mt-1 p-3 border rounded bg-white flex items-center justify-between cursor-pointer"
+                    onClick={() => setShowPlanSelector(!showPlanSelector)}
+                  >
+                    <div>
+                      {selectedPlan ? (
+                        <div className="flex gap-2 items-center">
+                          <Badge variant="secondary">{selectedPlan}</Badge>
+                          <span className="text-gray-600">({selectedClients.length} clients)</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">Select a plan</span>
+                      )}
+                    </div>
+                    <ChevronDown size={16} />
+                  </div>
+                  
+                  {showPlanSelector && (
+                    <div className="absolute z-10 mt-1 w-full border rounded bg-white shadow-lg p-2 max-h-60 overflow-y-auto">
+                      <div className="mb-2 pb-2 border-b">
+                        <div className="font-medium">Subscription plans</div>
+                      </div>
+                      {availablePlans.map((plan) => (
+                        <div 
+                          key={plan.name}
+                          className="p-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
+                          onClick={() => handlePlanSelect(plan.name)}
+                        >
+                          <Checkbox checked={selectedPlan === plan.name} />
+                          <div>
+                            <div className="font-medium">{plan.name}</div>
+                            <div className="text-sm text-gray-600">{plan.count} clients</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {selectedClients.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="text-sm font-medium text-gray-700">Selected Clients ({selectedClients.length})</Label>
+                    </div>
+                    <div className="border rounded bg-white p-2 max-h-40 overflow-y-auto">
+                      {selectedClients.slice(0, 5).map((client) => (
+                        <div key={client.id} className="flex items-center justify-between py-1 border-b last:border-b-0">
+                          <div>
+                            <span className="font-medium">{client.name}</span>
+                            {client.risk && (
+                              <Badge className="ml-2" variant={client.risk === "aggressive" ? "destructive" : "outline"}>
+                                {client.risk}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {selectedClients.length > 5 && (
+                        <div className="text-center text-sm text-gray-500 mt-2">
+                          And {selectedClients.length - 5} more clients
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
 
         <Button 
-          className="w-full" 
+          className="w-full mt-6 bg-purple-600 hover:bg-purple-700 flex items-center justify-center gap-2"
           disabled={(activeTab === "individual" && !selectedClient) || 
                    (activeTab === "plan" && (!selectedPlan || selectedClients.length === 0)) || 
-                   isSubmitting}
+                   isSubmitting ||
+                   !entryPrice || !stoplossPrice || !targetPrices}
           onClick={handleSubmit}
         >
-          {isSubmitting ? "Posting..." : `Post Advice to ${activeTab === "individual" ? "Client" : `${selectedClients.length} Clients`}`}
+          <SendHorizonal size={16} />
+          {isSubmitting ? "Posting..." : `Post Advice${activeTab === "plan" ? ` to ${selectedClients.length} Clients` : ""}`}
         </Button>
       </CardContent>
     </Card>

@@ -11,6 +11,7 @@ import {
   Gift,
   CircleArrowRight,
   Ban,
+  Target,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatTime } from "@/utils/format";
@@ -44,6 +45,7 @@ interface Trade {
   status: string;
   entry: number;
   stoploss: number;
+  targets?: number[];
   exitPrice?: number;
   riskReward?: number;
   rationale: string;
@@ -259,15 +261,37 @@ export const AdvisoryTradeCard = ({
               </span>
             </div>
 
-            <div>
-              <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                <Flag className="h-4 w-4" />
-                Exit Price
-              </p>
-              <span className="text-gray-900 font-medium">
-                {tradeData?.exitPrice ?? "—"}
-              </span>
-            </div>
+            {isActiveTrade ? (
+              <div>
+                <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                  <Target className="h-4 w-4" />
+                  Targets
+                </p>
+                <div className="text-gray-900 font-medium">
+                  {tradeData?.targets?.length ? (
+                    <div className="flex flex-col">
+                      {tradeData.targets.map((target, index) => (
+                        <span key={index}>
+                           {target}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    "—"
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                  <Flag className="h-4 w-4" />
+                  Exit Price
+                </p>
+                <span className="text-gray-900 font-medium">
+                  {tradeData?.exitPrice ?? "—"}
+                </span>
+              </div>
+            )}
 
             <div>
               <p className="flex items-center gap-1 text-xs text-gray-500 mb-1">
@@ -275,7 +299,19 @@ export const AdvisoryTradeCard = ({
                 Risk/Reward
               </p>
               <span className="text-gray-900 font-medium">
-                {tradeData?.riskReward ?? "—"}
+                {tradeData?.riskReward ? (
+                  <span
+                    className={
+                      tradeData.riskReward >= 1
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    {tradeData.riskReward}
+                  </span>
+                ) : (
+                  "—"
+                )}
               </span>
             </div>
           </div>
