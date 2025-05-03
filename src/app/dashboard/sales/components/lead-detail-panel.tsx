@@ -36,7 +36,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
   const allDocumentsUploaded = verificationDocUploaded && riskProfile && contractUploaded
 
   const handleMarkAsContacted = async () => {
-    if (!window.confirm("Have you contacted this lead?")) return
+    //if (!window.confirm("Have you contacted this lead?")) return
 
     try {
       const supabase = await createClerkSupabaseClient(session)
@@ -120,7 +120,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
     try {
       const supabase = await createClerkSupabaseClient(session);
       const advisorId = session?.user?.id || 'unknown';
-
+  
       // 1. Update the lead stage to 'paid'
       const { error: leadError } = await supabase
         .from('leads')
@@ -271,8 +271,8 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
               </Button>
             </div>
           ) : isLeadStage ? (
-            <div className="flex items-center gap-2 border border-yellow-500 rounded-md p-2 m-2">
-              <select
+            <div className="flex items-center gap-2 border p-2 m-2">
+              <select 
                 className="border rounded px-2 py-1 text-sm flex-1"
                 value={disposition}
                 onChange={(e) => setDisposition(e.target.value)}
@@ -305,7 +305,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
             </div>
           ) : null}
 
-          <Tabs defaultValue="activity" className="flex-1 flex flex-col overflow-hidden">
+          <Tabs defaultValue="activity" className="overflow-hidden">
             <TabsList className="grid grid-cols-5 border-b bg-transparent p-0">
               <TabsTrigger value="activity">Activity</TabsTrigger>
               <TabsTrigger value="chat" className="relative">

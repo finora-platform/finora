@@ -1,47 +1,47 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { LeadStage } from "./components/lead-stage"
-import { LeadDetailPanel } from "./components/lead-detail-panel"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, RotateCcw, Download } from "lucide-react"
-import type { Lead } from "./types/lead"
-import { FilterDropdown } from "./components/filter-dropdown"
-import LeadCSVImportDialog from "./components/lead-csv-import"
-import { createClerkSupabaseClient } from "@/utils/supabaseClient"
-import { useSession, useUser } from "@clerk/nextjs"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { useState, useEffect, useRef } from "react";
+import { LeadStage } from "./components/lead-stage";
+import { LeadDetailPanel } from "./components/lead-detail-panel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, RotateCcw, Download } from "lucide-react";
+import type { Lead } from "./types/lead";
+import { FilterDropdown } from "./components/filter-dropdown";
+import LeadCSVImportDialog from "./components/lead-csv-import";
+import { createClerkSupabaseClient } from "@/utils/supabaseClient";
+import { useSession, useUser } from "@clerk/nextjs";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function Sales() {
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [allLeads, setAllLeads] = useState<Lead[]>([])
-  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([])
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [allLeads, setAllLeads] = useState<Lead[]>([]);
+  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [filters, setFilters] = useState({
     plan: "All Plans",
     source: "All Sources",
     quality: "All Lead quality",
-  })
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { session, isLoaded: isSessionLoaded } = useSession()
-  const [isLeadsDataEmpty, setIsLeadsDataEmpty] = useState(false)
-  const { user, isLoaded: isUserLoaded } = useUser()
+  });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { session, isLoaded: isSessionLoaded } = useSession();
+  const [isLeadsDataEmpty, setIsLeadsDataEmpty] = useState(false);
+  const { user, isLoaded: isUserLoaded } = useUser();
 
-  const plans = ["All Plans", "Basic", "Premium", "Enterprise"]
-  const qualities = ["All Lead quality", "Cold", "Warm", "Hot"]
-  const boardRef = useRef<HTMLDivElement | null>(null)
+  const plans = ["All Plans", "Basic", "Premium", "Enterprise"];
+  const qualities = ["All Lead quality", "Cold", "Warm", "Hot"];
+  const boardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchLeads = async () => {
-      if (!isSessionLoaded || !isUserLoaded || !session) return
+      if (!isSessionLoaded || !isUserLoaded || !session) return;
 
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
-        const supabase = await createClerkSupabaseClient(session)
+        const supabase = await createClerkSupabaseClient(session);
         const { data, error } = await supabase
           .from("leads")
           .select("*")
@@ -49,17 +49,22 @@ export default function Sales() {
           .order("created_at", { ascending: false })
 
         if (error) {
-          throw error
+          throw error;
+        }
+        if (data.length === 0) {
+          setIsLeadsDataEmpty(true);
+        } else {
+          setIsLeadsDataEmpty(false);
         }
 
         setIsLeadsDataEmpty(data.length === 0)
         setAllLeads(data as Lead[])
         setFilteredLeads(data as Lead[])
       } catch (err) {
-        console.error("Failed to fetch leads:", err)
-        setError("Failed to load leads. Please try again.")
+        console.error("Failed to fetch leads:", err);
+        setError("Failed to load leads. Please try again.");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
     
@@ -72,18 +77,18 @@ export default function Sales() {
   const sources = ["All Sources", ...new Set(allLeads.map((lead) => lead.source || "").filter(Boolean))];
 
   useEffect(() => {
-    let result = [...allLeads]
+    let result = [...allLeads];
 
     if (filters.source !== "All Sources") {
-      result = result.filter((lead) => lead.source === filters.source)
+      result = result.filter((lead) => lead.source === filters.source);
     }
 
     if (filters.plan !== "All Plans") {
-      result = result.filter((lead) => lead.plan === filters.plan)
+      result = result.filter((lead) => lead.plan === filters.plan);
     }
 
     if (filters.quality !== "All Lead quality") {
-      result = result.filter((lead) => lead.quality === filters.quality)
+      result = result.filter((lead) => lead.quality === filters.quality);
     }
 
     if (searchQuery) {
@@ -95,17 +100,17 @@ export default function Sales() {
       )
     }
 
-    setFilteredLeads(result)
-  }, [filters, searchQuery, allLeads])
+    setFilteredLeads(result);
+  }, [filters, searchQuery, allLeads]);
 
   const resetFilters = () => {
     setFilters({
       plan: "All Plans",
       source: "All Sources",
       quality: "All Lead quality",
-    })
-    setSearchQuery("")
-  }
+    });
+    setSearchQuery("");
+  };
 
   const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead")
   const calledStage = filteredLeads.filter((lead) => lead.stage === "contacted")
@@ -134,7 +139,7 @@ export default function Sales() {
       <div className="flex items-center justify-center h-screen">
         <LoadingSpinner />
       </div>
-    )
+    );
   }
 
   if (!session) {
@@ -142,7 +147,7 @@ export default function Sales() {
       <div className="flex items-center justify-center h-screen">
         <p>Please sign in to view leads</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -150,7 +155,7 @@ export default function Sales() {
       <div className="flex items-center justify-center h-screen">
         <p className="text-red-500">{error}</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -294,5 +299,5 @@ export default function Sales() {
         }}
       />
     </div>
-  )
+  );
 }

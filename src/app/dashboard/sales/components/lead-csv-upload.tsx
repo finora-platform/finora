@@ -243,7 +243,7 @@ export default function LeadCSVUpload({ open, onOpenChange }: LeadCSVUploadProps
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           metadata: Object.keys(metadataObj).length > 0 ? metadataObj : row.metadata || null,
-          advisor_id:session.user.id,
+          advisor_id: session.user.id,
         };
       });
 
@@ -327,7 +327,7 @@ export default function LeadCSVUpload({ open, onOpenChange }: LeadCSVUploadProps
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="m-auto p-4">
       <Card>
         <CardHeader>
           <CardTitle>Import Leads from CSV</CardTitle>

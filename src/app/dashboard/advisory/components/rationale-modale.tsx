@@ -10,7 +10,7 @@ import {
 import { useState, useRef } from "react";
 import { Document, Page } from "react-pdf";
 import { pdfjs } from "react-pdf";
-import { Upload, Send, Info, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { Upload, Send, Info, PanelRightOpen, PanelRightClose, MousePointer2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -89,7 +89,7 @@ export default function RationaleModal({trade}) {
           className="text-orange-500 bg-white shadow-none hover:bg-white"
           onClick={() => setIsOpen(true)}
         >
-          Open Rationale
+        <MousePointer2 />Open Rationale
         </Button>
       </DialogTrigger>
       <DialogContent className="w-[80vw] max-w-none h-[80vh] max-h-[80vh] overflow-auto py-0">

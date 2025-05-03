@@ -21,7 +21,7 @@ export default function Dashboard() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
+  const [supabaseClient, setSupabaseClient] = useState(null);
 
   useEffect(() => {
       if (isLoaded && session) {

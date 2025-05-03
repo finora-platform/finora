@@ -7,6 +7,7 @@ export interface Lead {
   created_at: string
   onboarding_date?: string
   document_verified?: boolean
+  assigned_rm?: string
   plan?: string
   email?: string
   disposition?: string

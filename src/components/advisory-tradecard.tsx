@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Edit,
   X,
-  Clock,
+  History,
   User,
   Flag,
   Gift,
@@ -217,7 +217,7 @@ export const AdvisoryTradeCard = ({
                     setIsTimelineOpen(true);
                   }}
                 >
-                  <Clock className="h-4 w-4" />
+                  <History className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

@@ -181,7 +181,7 @@ export default function ClientTable() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertDescription>{error}</AlertDescription>
@@ -205,8 +205,8 @@ export default function ClientTable() {
         setExistingClient={setExistingClient}
       />
 
-      <div className="rounded-md border">
-        <ScrollArea className="h-[80vh] rounded-md border">
+      <div className="h-[90%] rounded-md border">
+        <ScrollArea className=" rounded-md border">
           <Table>
             <ClientTableHeader handleSort={handleSort} sortField={sortField} />
             <TableBody>

@@ -15,7 +15,8 @@ interface LeadCSVImportDialogProps {
 const LeadCSVImportDialog: React.FC<LeadCSVImportDialogProps> = ({ show, setShow }) => {
   return (
     <Dialog open={show} onOpenChange={setShow}>
-      <DialogContent className="sm:max-w-[33vw]"> {/* Removed side and absolute classes */}
+      <DialogContent className="flex justify-center h-[80vh] overflow-auto max-w-none">
+        <DialogTitle className="sr-only">Import Leads from Csv and Written</DialogTitle>
         <DialogHeader>
           {/* <DialogTitle>Import Leads from CSV</DialogTitle> */}
           {/* <DialogDescription>Upload a CSV file containing lead data</DialogDescription> */}
