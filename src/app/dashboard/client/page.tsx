@@ -5,7 +5,7 @@ import ClientTable from "../../../components/client-table";
 
 export default function Client() {
   return ( 
-      <div className="container mx-auto py-10">
+      <div className="h-full overflow-y-auto bg-gray-50 p-8">
         <ClientTable />
       </div>
   );

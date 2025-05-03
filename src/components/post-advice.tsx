@@ -113,7 +113,7 @@ export default function PostAdviceForm({
           .select("id, name, email, whatsapp, assigned_rn, risk, ekyc_status, plan")
           .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,assigned_rn.ilike.%${searchQuery}%,risk.ilike.%${searchQuery}%,plan.ilike.%${searchQuery}%`)
           .limit(40)
-          .eq("advisor_id", session.user.id);
+          //.eq("advisor_id", session.user.id);
         
         if (!error) {
           setSearchResults(data || []);

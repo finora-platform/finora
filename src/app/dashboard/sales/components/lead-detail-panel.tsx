@@ -37,7 +37,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
   const allDocumentsUploaded = verificationDocUploaded && riskProfile && contractUploaded
 
   const handleMarkAsContacted = async () => {
-    if (!window.confirm("Have you contacted this lead?")) return
+    //if (!window.confirm("Have you contacted this lead?")) return
 
     try {
       const supabase = await createClerkSupabaseClient(session)
@@ -86,7 +86,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
   }
 
   const handleMarkAsDocumented = async () => {
-    if (!window.confirm("Mark this lead as documented?")) return
+    //if (!window.confirm("Mark this lead as documented?")) return
 
     try {
       const supabase = await createClerkSupabaseClient(session)
@@ -109,12 +109,13 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
   }
 
   const handleVerifyPayment = async () => {
-    if (!window.confirm("Complete documentation and mark as paid?")) return
+    if (!window.confirm("Complete documentation and mark as paid?")) return;
   
     try {
-      const supabase = await createClerkSupabaseClient(session)
-      const advisorId = session?.user?.id || 'unknown'
-
+      const supabase = await createClerkSupabaseClient(session);
+      const advisorId = session?.user?.id || 'unknown';
+  
+      // 1. Update the lead stage to 'paid'
       const { error: leadError } = await supabase
         .from('leads')
         .update({ 
@@ -122,14 +123,15 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
           updated_at: new Date().toISOString(),
           document: true
         })
-        .eq('id', lead.id)
-
-      if (leadError) throw leadError
-
+        .eq('id', lead.id);
+  
+      if (leadError) throw leadError;
+  
+      // 2. Insert client into 'client3' table
       const clientData = {
         name: lead.name,
         email: lead.email,
-        whatsapp: lead.phone,
+        whatsapp: lead.phone || '', // fallback if missing
         role: 'client',
         assigned_rn: lead.assigned_rm || 'unassigned',
         risk: riskProfile || 'medium',
@@ -137,22 +139,21 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
         plan: lead.plan || 'standard',
         created_at: new Date().toISOString(),
         user_id: advisorId,
-      }
-
+      };
+  
       const { error: clientError } = await supabase
         .from('client3')
-        .insert([clientData])
-
-      if (clientError) throw clientError
-
-      alert("Client successfully documented and marked as paid!")
-      onStatusChange()
-      onClose()
+        .insert([clientData]);
+  
+      if (clientError) throw clientError;
+  
+      alert("Client successfully documented and marked as paid!");
+      onClose();
     } catch (error) {
-      console.error("Payment verification error:", error)
-      alert("Failed to complete payment verification")
+      console.error("Payment verification error:", error);
+      alert("Failed to complete payment verification");
     }
-  }
+  };
 
   const handleRiskProfileChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setRiskProfile(e.target.value)

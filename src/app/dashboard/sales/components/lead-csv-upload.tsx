@@ -327,7 +327,7 @@ export default function LeadCSVUpload({ open, onOpenChange }: LeadCSVUploadProps
   };
 
   return (
-    <div className="mx-auto p-4">
+    <div className="m-auto p-4">
       <Card>
         <CardHeader>
           <CardTitle>Import Leads from CSV</CardTitle>

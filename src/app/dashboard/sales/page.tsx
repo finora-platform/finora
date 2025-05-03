@@ -1,122 +1,126 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { LeadStage } from "./components/lead-stage"
-import { LeadDetailPanel } from "./components/lead-detail-panel"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, RotateCcw, Download } from "lucide-react"
-import type { Lead } from "./types/lead"
-import { FilterDropdown } from "./components/filter-dropdown"
-import LeadCSVImportDialog from "./components/lead-csv-import"
-import { createClerkSupabaseClient } from "@/utils/supabaseClient"
-import { useSession, useUser } from "@clerk/nextjs"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { useState, useEffect, useRef } from "react";
+import { LeadStage } from "./components/lead-stage";
+import { LeadDetailPanel } from "./components/lead-detail-panel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, RotateCcw, Download } from "lucide-react";
+import type { Lead } from "./types/lead";
+import { FilterDropdown } from "./components/filter-dropdown";
+import LeadCSVImportDialog from "./components/lead-csv-import";
+import { createClerkSupabaseClient } from "@/utils/supabaseClient";
+import { useSession, useUser } from "@clerk/nextjs";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function Sales() {
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [allLeads, setAllLeads] = useState<Lead[]>([])
-  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([])
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [allLeads, setAllLeads] = useState<Lead[]>([]);
+  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [filters, setFilters] = useState({
     plan: "All Plans",
     source: "All Sources",
     quality: "All Lead quality",
-  })
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { session, isLoaded: isSessionLoaded } = useSession()
-  const [isLeadsDataEmpty, setIsLeadsDataEmpty] = useState(false)
-  const { user, isLoaded: isUserLoaded } = useUser()
+  });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { session, isLoaded: isSessionLoaded } = useSession();
+  const [isLeadsDataEmpty, setIsLeadsDataEmpty] = useState(false);
+  const { user, isLoaded: isUserLoaded } = useUser();
 
-  const plans = ["All Plans", "Basic", "Premium", "Enterprise"]
-  const qualities = ["All Lead quality", "Cold", "Warm", "Hot"]
-  const boardRef = useRef<HTMLDivElement | null>(null)
+  const plans = ["All Plans", "Basic", "Premium", "Enterprise"];
+  const qualities = ["All Lead quality", "Cold", "Warm", "Hot"];
+  const boardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchLeads = async () => {
-      if (!isSessionLoaded || !isUserLoaded || !session) return
+      if (!isSessionLoaded || !isUserLoaded || !session) return;
 
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
-        const supabase = await createClerkSupabaseClient(session)
+        const supabase = await createClerkSupabaseClient(session);
         const { data, error } = await supabase
           .from("leads")
           .select("*")
           .eq("advisor_id", session.user.id)
           .order("updated_at", { ascending: true })
-          .eq("advisor_id", session.user.id)
+          .eq("advisor_id", session.user.id);
 
         if (error) {
-          throw error
+          throw error;
         }
         if (data.length === 0) {
-          setIsLeadsDataEmpty(true)
+          setIsLeadsDataEmpty(true);
         } else {
-          setIsLeadsDataEmpty(false)
+          setIsLeadsDataEmpty(false);
         }
-        setAllLeads(data as Lead[])
-        setFilteredLeads(data as Lead[])
+        setAllLeads(data as Lead[]);
+        setFilteredLeads(data as Lead[]);
       } catch (err) {
-        console.error("Failed to fetch leads:", err)
-        setError("Failed to load leads. Please try again.")
+        console.error("Failed to fetch leads:", err);
+        setError("Failed to load leads. Please try again.");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchLeads()
-  }, [isSessionLoaded, isUserLoaded, session])
+    };
+    fetchLeads();
+  }, [isSessionLoaded, isUserLoaded, session]);
 
-  console.log("All leads:", allLeads)
-  console.log("Filtered leads:", filteredLeads)
-
-  const sources = ["All Sources", ...new Set(allLeads.map((lead) => lead.source))]
+  const sources = [
+    "All Sources",
+    ...new Set(allLeads.map((lead) => lead.source)),
+  ];
 
   useEffect(() => {
-    let result = [...allLeads]
+    let result = [...allLeads];
 
     if (filters.source !== "All Sources") {
-      result = result.filter((lead) => lead.source === filters.source)
+      result = result.filter((lead) => lead.source === filters.source);
     }
 
     if (filters.plan !== "All Plans") {
-      result = result.filter((lead) => lead.plan === filters.plan)
+      result = result.filter((lead) => lead.plan === filters.plan);
     }
 
     if (filters.quality !== "All Lead quality") {
-      result = result.filter((lead) => lead.quality === filters.quality)
+      result = result.filter((lead) => lead.quality === filters.quality);
     }
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter((lead) => lead.name.toLowerCase().includes(query))
+      const query = searchQuery.toLowerCase();
+      result = result.filter((lead) => lead.name.toLowerCase().includes(query));
     }
 
-    setFilteredLeads(result)
-  }, [filters, searchQuery, allLeads])
+    setFilteredLeads(result);
+  }, [filters, searchQuery, allLeads]);
 
   const resetFilters = () => {
     setFilters({
       plan: "All Plans",
       source: "All Sources",
       quality: "All Lead quality",
-    })
-    setSearchQuery("")
-  }
+    });
+    setSearchQuery("");
+  };
 
-  const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead")
-  const calledStage = filteredLeads.filter((lead) => lead.stage === "contacted")
-  const subscribedStage = filteredLeads.filter((lead) => lead.stage === "documented")
-  const onboardedStage = filteredLeads.filter((lead) => lead.stage === "paid")
+  const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead");
+  const calledStage = filteredLeads.filter(
+    (lead) => lead.stage === "contacted"
+  );
+  const subscribedStage = filteredLeads.filter(
+    (lead) => lead.stage === "documented"
+  );
+  const onboardedStage = filteredLeads.filter((lead) => lead.stage === "paid");
 
   if (!isSessionLoaded || !isUserLoaded || loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <LoadingSpinner />
       </div>
-    )
+    );
   }
 
   if (!session) {
@@ -124,7 +128,7 @@ export default function Sales() {
       <div className="flex items-center justify-center h-screen">
         <p>Please sign in to view leads</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -132,7 +136,7 @@ export default function Sales() {
       <div className="flex items-center justify-center h-screen">
         <p className="text-red-500">{error}</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -188,32 +192,34 @@ export default function Sales() {
           ref={boardRef}
           style={{ overflowY: "auto" }}
         >
-          {!isLeadsDataEmpty && <div className="grid grid-cols-4 gap-4 min-h-full">
-            <LeadStage
-              title="Leads"
-              leads={leadsStage}
-              count={leadsStage.length}
-              onLeadClick={setSelectedLead}
-            />
-            <LeadStage
-              title="Called"
-              leads={calledStage}
-              count={calledStage.length}
-              onLeadClick={setSelectedLead}
-            />
-            <LeadStage
-              title="Subscribed"
-              leads={subscribedStage}
-              count={subscribedStage.length}
-              onLeadClick={setSelectedLead}
-            />
-            <LeadStage
-              title="Onboarded"
-              leads={onboardedStage}
-              count={onboardedStage.length}
-              onLeadClick={setSelectedLead}
-            />
-          </div>}
+          {!isLeadsDataEmpty && (
+            <div className="grid grid-cols-4 gap-4 min-h-full">
+              <LeadStage
+                title="Leads"
+                leads={leadsStage}
+                count={leadsStage.length}
+                onLeadClick={setSelectedLead}
+              />
+              <LeadStage
+                title="Contacted"
+                leads={calledStage}
+                count={calledStage.length}
+                onLeadClick={setSelectedLead}
+              />
+              <LeadStage
+                title="Documented"
+                leads={subscribedStage}
+                count={subscribedStage.length}
+                onLeadClick={setSelectedLead}
+              />
+              <LeadStage
+                title="Paid"
+                leads={onboardedStage}
+                count={onboardedStage.length}
+                onLeadClick={setSelectedLead}
+              />
+            </div>
+          )}
           {isLeadsDataEmpty && (
             <div
               className="h-[94%] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md relative"
@@ -305,5 +311,5 @@ export default function Sales() {
       )}
       <LeadCSVImportDialog show={isDialogOpen} setShow={setIsDialogOpen} />
     </div>
-  )
+  );
 }
