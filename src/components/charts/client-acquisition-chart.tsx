@@ -41,7 +41,7 @@ export function ClientAcquisitionChart() {
       const { data: leads, error } = await supabase
         .from("leads")
         .select("created_at, updated_at")
-        .eq("stage", "onboarded")
+        .eq("stage", "paid")
         .order("updated_at", { ascending: true })
 
       if (error) {

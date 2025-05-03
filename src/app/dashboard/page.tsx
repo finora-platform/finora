@@ -13,6 +13,7 @@ import { ClientAcquisitionChart } from "@/components/charts/client-acquisition-c
 import { activeClientsData, complianceAreas, revenueData, employeeTargetsData, clientAcquisitionData } from '@/lib/dummydata';
 import { useSession } from '@clerk/nextjs';
 import { createClerkSupabaseClient, SupabaseClient } from "@/utils/supabaseClient";
+import { WordDocumentEditor } from './sales/components/contract';
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -86,5 +87,6 @@ export default function Dashboard() {
         </FilterProvider>
       )}
     </div>
+    // <WordDocumentEditor/>
   );
 }

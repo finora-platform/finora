@@ -134,87 +134,9 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
     }
   }
 
-  const handleTradeUpdate = async (updatedTrade: Trade) => {
-    try {
-      const supabase = await createClerkSupabaseClient(session)
-
-      const { data, error } = await supabase
-        .from("user_trades")
-        .update({ trade_data: updatedTrade.trade_data })
-        .eq("id", updatedTrade.rowId)
-        .select()
-
-      if (error) throw error
-
-      setTrades(trades.map((t) => (t.id === updatedTrade.id ? { ...t, ...updatedTrade } : t)))
-      return Promise.resolve()
-    } catch (error) {
-      console.error("Error updating trade:", error)
-      return Promise.reject(error)
-    }
-  }
-
-  const handleTradeExit = async (tradeId: number, exitData: any) => {
-    try {
-      const supabase = await createClerkSupabaseClient(session)
-      const tradeToUpdate = trades.find((trade) => trade.id === tradeId)
-
-      if (!tradeToUpdate) {
-        throw new Error("Trade not found")
-      }
-
-      const rowId = tradeToUpdate.rowId;
-
-      const { data: currentRowData, error: fetchError } = await supabase
-        .from("user_trades")
-        .select("trade_data")
-        .eq("id", rowId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const updatedTradeDataArray = currentRowData.trade_data.map((trade: any) => {
-        if (trade.stock === tradeToUpdate.stock && 
-            trade.tradeType === tradeToUpdate.tradeType && 
-            trade.createdAt === tradeToUpdate.createdAt) {
-          return {
-            ...trade,
-            status: "EXITED",
-            exitPrice: exitData.exitPrice,
-            exitDate: exitData.exitDate,
-            exitReason: exitData.exitReason,
-            pnl: exitData.pnl,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return trade;
-      });
-
-      const { error: updateError } = await supabase
-        .from("user_trades")
-        .update({ trade_data: updatedTradeDataArray })
-        .eq("id", rowId);
-
-      if (updateError) throw updateError;
-
-      setTrades(trades.map((trade) => 
-        trade.id === tradeId 
-          ? { 
-              ...trade, 
-              status: "EXITED",
-              exitPrice: exitData.exitPrice,
-              exitDate: exitData.exitDate,
-              exitReason: exitData.exitReason,
-              updatedAt: new Date().toISOString(),
-            } 
-          : trade
-      ));
-
-      return Promise.resolve()
-    } catch (error) {
-      console.error("Error exiting trade:", error)
-      return Promise.reject(error)
-    }
+  // Simplified to just refresh data after external updates
+  const handleTradeUpdated = () => {
+    fetchTrades()
   }
 
   return (
@@ -271,8 +193,8 @@ export const AdvisoryTradeList: React.FC<AdvisoryTradeListProps> = ({
               key={trade.id}
               trade={trade}
               isLast={index === trades.length - 1}
-              onTradeUpdate={handleTradeUpdate}
-              onTradeExit={handleTradeExit}
+              onTradeUpdate={handleTradeUpdated}
+              onTradeExit={handleTradeUpdated}
               clientId={clientId}
               clientName={clientNames[trade.userId] || "Unknown Client"}
               stock={trade.stock}

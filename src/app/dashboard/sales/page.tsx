@@ -46,8 +46,7 @@ export default function Sales() {
           .from("leads")
           .select("*")
           .eq("advisor_id", session.user.id)
-          .order("updated_at", { ascending: true })
-          .eq("advisor_id", session.user.id);
+          .order("created_at", { ascending: false })
 
         if (error) {
           throw error;
@@ -57,22 +56,25 @@ export default function Sales() {
         } else {
           setIsLeadsDataEmpty(false);
         }
-        setAllLeads(data as Lead[]);
-        setFilteredLeads(data as Lead[]);
+
+        setIsLeadsDataEmpty(data.length === 0)
+        setAllLeads(data as Lead[])
+        setFilteredLeads(data as Lead[])
       } catch (err) {
         console.error("Failed to fetch leads:", err);
         setError("Failed to load leads. Please try again.");
       } finally {
         setLoading(false);
       }
-    };
-    fetchLeads();
-  }, [isSessionLoaded, isUserLoaded, session]);
+    }
+    
+    fetchLeads()
+    const intervalId = setInterval(fetchLeads, 30000) // Refresh every 30 seconds
 
-  const sources = [
-    "All Sources",
-    ...new Set(allLeads.map((lead) => lead.source)),
-  ];
+    return () => clearInterval(intervalId)
+  }, [isSessionLoaded, isUserLoaded, session])
+
+  const sources = ["All Sources", ...new Set(allLeads.map((lead) => lead.source || "").filter(Boolean))];
 
   useEffect(() => {
     let result = [...allLeads];
@@ -90,8 +92,12 @@ export default function Sales() {
     }
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((lead) => lead.name.toLowerCase().includes(query));
+      const query = searchQuery.toLowerCase()
+      result = result.filter((lead) => 
+        lead.name.toLowerCase().includes(query) ||
+        lead.email?.toLowerCase().includes(query) ||
+        lead.phone?.toLowerCase().includes(query)
+      )
     }
 
     setFilteredLeads(result);
@@ -106,14 +112,27 @@ export default function Sales() {
     setSearchQuery("");
   };
 
-  const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead");
-  const calledStage = filteredLeads.filter(
-    (lead) => lead.stage === "contacted"
-  );
-  const subscribedStage = filteredLeads.filter(
-    (lead) => lead.stage === "documented"
-  );
-  const onboardedStage = filteredLeads.filter((lead) => lead.stage === "paid");
+  const leadsStage = filteredLeads.filter((lead) => lead.stage === "lead")
+  const calledStage = filteredLeads.filter((lead) => lead.stage === "contacted")
+  const subscribedStage = filteredLeads.filter((lead) => lead.stage === "documented")
+  const onboardedStage = filteredLeads.filter((lead) => lead.stage === "paid")
+
+  const handleStatusChange = () => {
+    // Refresh leads after status change
+    if (session) {
+      createClerkSupabaseClient(session)
+        .from("leads")
+        .select("*")
+        .eq("advisor_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .then(({ data, error }) => {
+          if (!error) {
+            setAllLeads(data as Lead[])
+            setFilteredLeads(data as Lead[])
+          }
+        })
+    }
+  }
 
   if (!isSessionLoaded || !isUserLoaded || loading) {
     return (
@@ -149,22 +168,25 @@ export default function Sales() {
                 options={plans}
                 value={filters.plan}
                 onChange={(value) => setFilters({ ...filters, plan: value })}
+                label="Plan"
               />
               <FilterDropdown
                 options={sources}
                 value={filters.source}
                 onChange={(value) => setFilters({ ...filters, source: value })}
+                label="Source"
               />
               <FilterDropdown
                 options={qualities}
                 value={filters.quality}
                 onChange={(value) => setFilters({ ...filters, quality: value })}
+                label="Quality"
               />
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search by name"
+                  placeholder="Search by name, email or phone"
                   className="w-[250px] pl-8"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -172,12 +194,13 @@ export default function Sales() {
               </div>
               <Button variant="outline" size="sm" onClick={resetFilters}>
                 <RotateCcw className="h-4 w-4 mr-2" />
+                Reset
               </Button>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
-                Leads imported live
+                {allLeads.length} total leads
               </span>
               <Button onClick={() => setIsDialogOpen(true)}>
                 <Download className="h-4 w-4 mr-2" />
@@ -192,111 +215,55 @@ export default function Sales() {
           ref={boardRef}
           style={{ overflowY: "auto" }}
         >
-          {!isLeadsDataEmpty && (
+          {!isLeadsDataEmpty ? (
             <div className="grid grid-cols-4 gap-4 min-h-full">
               <LeadStage
                 title="Leads"
                 leads={leadsStage}
                 count={leadsStage.length}
                 onLeadClick={setSelectedLead}
+                color="bg-blue-50"
               />
               <LeadStage
                 title="Contacted"
                 leads={calledStage}
                 count={calledStage.length}
                 onLeadClick={setSelectedLead}
+                color="bg-purple-50"
               />
               <LeadStage
                 title="Documented"
                 leads={subscribedStage}
                 count={subscribedStage.length}
                 onLeadClick={setSelectedLead}
+                color="bg-green-50"
               />
               <LeadStage
                 title="Paid"
                 leads={onboardedStage}
                 count={onboardedStage.length}
                 onLeadClick={setSelectedLead}
+                color="bg-gray-50"
               />
             </div>
-          )}
-          {isLeadsDataEmpty && (
-            <div
-              className="h-[94%] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md relative"
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.currentTarget.classList.add("border-blue-500", "bg-blue-50");
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.currentTarget.classList.remove(
-                  "border-blue-500",
-                  "bg-blue-50"
-                );
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.currentTarget.classList.remove(
-                  "border-blue-500",
-                  "bg-blue-50"
-                );
-                const files = Array.from(e.dataTransfer.files);
-                const acceptedTypes = [
-                  "text/csv",
-                  "application/vnd.ms-excel",
-                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                ];
-                const filteredFiles = files.filter((file) =>
-                  acceptedTypes.includes(file.type)
-                );
-                if (filteredFiles.length === 0) {
-                  alert("Only CSV and Excel files are accepted.");
-                  return;
-                }
-                // Handle accepted files here
-                console.log("Dropped files:", filteredFiles);
-              }}
-            >
+          ) : (
+            <div className="h-[94%] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md relative">
               <input
                 type="file"
                 id="fileInput"
                 accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 multiple
                 className="hidden"
-                onChange={(e) => {
-                  const files = e.target.files
-                    ? Array.from(e.target.files)
-                    : [];
-                  const acceptedTypes = [
-                    "text/csv",
-                    "application/vnd.ms-excel",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                  ];
-                  const filteredFiles = files.filter((file) =>
-                    acceptedTypes.includes(file.type)
-                  );
-                  if (filteredFiles.length === 0) {
-                    alert("Only CSV and Excel files are accepted.");
-                    return;
-                  }
-                  // Handle accepted files here
-                  console.log("Selected files:", filteredFiles);
-                }}
               />
               <Button
-                onClick={() => {
-                  setIsDialogOpen(true);
-                }}
+                onClick={() => setIsDialogOpen(true)}
                 className="mb-4"
               >
-                Add Existing Leads
+                <Download className="h-4 w-4 mr-2" />
+                Import Leads
               </Button>
-              <p className="text-muted-foreground">
-                Drag and drop CSV or Excel files here, or click the button to
-                select files.
+              <p className="text-muted-foreground text-center max-w-md">
+                No leads found. Import your leads using a CSV or Excel file to get started.
               </p>
             </div>
           )}
@@ -307,9 +274,30 @@ export default function Sales() {
         <LeadDetailPanel
           lead={selectedLead}
           onClose={() => setSelectedLead(null)}
+          onStatusChange={handleStatusChange}
         />
       )}
-      <LeadCSVImportDialog show={isDialogOpen} setShow={setIsDialogOpen} />
+      
+      <LeadCSVImportDialog 
+        show={isDialogOpen} 
+        setShow={setIsDialogOpen}
+        onImportSuccess={() => {
+          if (session) {
+            createClerkSupabaseClient(session)
+              .from("leads")
+              .select("*")
+              .eq("advisor_id", session.user.id)
+              .order("created_at", { ascending: false })
+              .then(({ data, error }) => {
+                if (!error) {
+                  setAllLeads(data as Lead[])
+                  setFilteredLeads(data as Lead[])
+                  setIsLeadsDataEmpty(data.length === 0)
+                }
+              })
+          }
+        }}
+      />
     </div>
   );
 }

@@ -16,7 +16,7 @@ const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
   const [formData, setFormData] = useState({
     name: "",
     whatsapp: "",
-    role: "",
+    pancard: "",
     email: "",
     assigned_rn: "",
     risk: "",
@@ -49,10 +49,13 @@ const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
       newErrors.email = "Valid email is required";
     if (formData.whatsapp && !formData.whatsapp.match(/^\+?[\d\s-]{10,}$/))
       newErrors.whatsapp = "Valid phone number is required";
-
+  
+    // PAN card validation removed
+  
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -135,15 +138,17 @@ const ClientForm = ({ initialData = {}, onCancel, mode = "create" }) => {
             {errors.whatsapp && <p className="text-sm text-red-500">{errors.whatsapp}</p>}
           </div>
 
-          {/* Role */}
+          {/* PAN Card */}
           <div className="space-y-2">
-            <label className="block font-medium">Role</label>
+            <label className="block font-medium">PAN Card Number</label>
             <Input
-              value={formData.role}
-              onChange={(e) => handleChange("role", e.target.value)}
-              placeholder="Investor"
-              className="rounded-xl border p-4"
+              value={formData.pancard}
+              onChange={(e) => handleChange("pancard", e.target.value.toUpperCase())}
+              placeholder="ABCDE1234F"
+              maxLength={10}
+              className={`rounded-xl border p-4 ${errors.pancard ? "border-red-500" : ""}`}
             />
+            {errors.pancard && <p className="text-sm text-red-500">{errors.pancard}</p>}
           </div>
 
           {/* Email */}
