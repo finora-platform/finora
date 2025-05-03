@@ -1,6 +1,8 @@
 import { Info, Phone, Mail } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Client } from "../lib/types";
 
 interface ClientTableRowProps {
@@ -12,58 +14,101 @@ interface ClientTableRowProps {
 
 export const ClientTableRow = ({ client, handleEditClient, handleDeleteClient, setSelectedClient }: ClientTableRowProps) => {
   return (
-    <TableRow key={client.id} onClick={() => setSelectedClient(client)}>
+    <TableRow 
+      key={client.id} 
+      onClick={() => setSelectedClient(client)}
+      className="hover:bg-muted/50 cursor-pointer"
+    >
       <TableCell>
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-            {client.name?.charAt(0) || '?'}
-          </div>
-          <div>
-            <div className="font-medium truncate max-w-[200px]">{client.name || 'Unnamed'}</div>
-            <div className="text-sm text-muted-foreground">
-              {client.email || 'No email'}
-            </div>
+        <div className="flex items-center gap-4">
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="bg-muted">
+              {client.name?.charAt(0).toUpperCase() || '?'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <p className="text-sm font-medium leading-none truncate max-w-[180px]">
+              {client.name || 'Unnamed Client'}
+            </p>
+            <p className="text-sm text-muted-foreground truncate max-w-[180px]">
+              {client.email || 'No email provided'}
+            </p>
           </div>
         </div>
       </TableCell>
-      <TableCell>
-        <div className="text-sm font-medium">
-          {client.plan || 'No plan'}
-        </div>
+      
+      <TableCell className="font-medium">
+        {client.plan || 'No plan'}
       </TableCell>
+      
       <TableCell>
-        <div className="font-medium">{client.assigned_rm || 'Unassigned'}</div>
+        <p className="text-sm font-medium">
+          {client.assigned_rm || 'Unassigned'}
+        </p>
       </TableCell>
-      <TableCell>{client.risk || 'Not specified'}</TableCell>
+      
       <TableCell>
-        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${client.ekyc_status === 'verified'
-            ? 'bg-green-100 text-green-800'
-            : 'bg-yellow-100 text-yellow-800'
-          }`}>
+        <p className="text-sm">
+          {client.risk || 'Not specified'}
+        </p>
+      </TableCell>
+      
+      <TableCell>
+        <Badge 
+          variant={client.ekyc_status === 'verified' ? 'default' : 'secondary'} 
+          className={client.ekyc_status === 'verified' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}
+        >
           {client.ekyc_status === 'verified' ? 'Verified' : 'Pending'}
-        </div>
+        </Badge>
       </TableCell>
+      
       <TableCell>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon" onClick={(e) => {
-            e.stopPropagation();
-            handleEditClient(client);
-          }}>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditClient(client);
+            }}
+          >
             <Info className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={(e) => {
-            e.stopPropagation();
-            window.location.href = `tel:${client.whatsapp}`;
-          }}>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.location.href = `tel:${client.whatsapp}`;
+            }}
+          >
             <Phone className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={(e) => {
-            e.stopPropagation();
-            window.location.href = `mailto:${client.email}`;
-          }}>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.location.href = `mailto:${client.email}`;
+            }}
+          >
             <Mail className="h-4 w-4" />
           </Button>
-          <Button variant="destructive" onClick={() => handleDeleteClient(client.id)} className="ml-2">
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-8 ml-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteClient(client.id);
+            }}
+          >
             Delete
           </Button>
         </div>
