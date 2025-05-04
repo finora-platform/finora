@@ -89,17 +89,26 @@ export default function ClientTable() {
       setError('Supabase client is not initialized');
       return;
     }
-
-    if (!window.confirm('Are you sure you want to delete this client?')) return;
-
+  
+    if (!window.confirm('Are you sure you want to delete this client and all their trades?')) return;
+  
     try {
-      const { error } = await supabaseClient
+      // First delete all trades for this client
+      const { error: tradesError } = await supabaseClient
+        .from('user_trades')
+        .delete()
+        .eq('user_id', id);
+  
+      if (tradesError) throw tradesError;
+  
+      // Then delete the client
+      const { error: clientError } = await supabaseClient
         .from('client3')
         .delete()
         .eq('id', id);
-
-      if (error) throw error;
-
+  
+      if (clientError) throw clientError;
+  
       await fetchClients(supabaseClient);
     } catch (err) {
       setError(`Error deleting client: ${err.message}`);
