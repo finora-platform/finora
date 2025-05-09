@@ -42,6 +42,7 @@ export function ClientAcquisitionChart() {
         .from("leads")
         .select("created_at, updated_at")
         .eq("stage", "paid")
+        .eq("advisor_id", session.user.id)
         .order("updated_at", { ascending: true })
 
       if (error) {
@@ -95,7 +96,7 @@ export function ClientAcquisitionChart() {
     <Card className="col-span-2">
       <CardHeader>
         <CardTitle className="flex justify-between">
-          <span>Client Onboarding</span>
+          <span>Clients Onboarded</span>
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold">{total}</span>
             <span className={`text-sm ${percentageChange >= 0 ? "text-green-500" : "text-red-500"}`}>

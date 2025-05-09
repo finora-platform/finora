@@ -110,7 +110,6 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
       onStatusChange()
     } catch (error) {
       console.error("Error updating lead:", error)
-      alert("Failed to update lead status")
     }
   }
 
@@ -138,7 +137,7 @@ export const LeadDetailPanel = ({ lead, onClose, onStatusChange }: LeadDetailPan
         name: lead.name,
         email: lead.email,
         whatsapp: lead.phone || '',
-        role: 'client',
+        pancard: 'client',
         assigned_rn: lead.assigned_rm || 'unassigned',
         risk: riskProfile || 'medium',
         ekyc_status: verificationDocUploaded ? 'verified' : 'pending',

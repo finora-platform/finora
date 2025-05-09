@@ -1,5 +1,5 @@
 export interface Client {
-    client_id: number;
+    id: number;
     name:string;
     email: string;
     phone: string;
@@ -15,7 +15,8 @@ export interface Client {
     updated_at: string;
     rm_name: string;
     rm_email: string;
-    plan_name: string;
+    plan: string;
+    risk: string;
     days_to_renewal: number | null;
   }
   

@@ -100,7 +100,7 @@ export const ClientTableRow = ({ client, handleEditClient, handleDeleteClient, s
             <Mail className="h-4 w-4" />
           </Button>
           
-          <Button 
+          {/* <Button 
             variant="outline" 
             size="sm"
             className="h-8 ml-2"
@@ -110,7 +110,7 @@ export const ClientTableRow = ({ client, handleEditClient, handleDeleteClient, s
             }}
           >
             Delete
-          </Button>
+          </Button> */}
         </div>
       </TableCell>
     </TableRow>

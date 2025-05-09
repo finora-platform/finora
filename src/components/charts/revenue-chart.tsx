@@ -78,8 +78,6 @@ export function RevenueChart() {
 
         if (error) throw error
 
-        console.log("Fetched trades:", trades) // Log the raw fetched trades
-
         if (!trades?.length) {
           setChartData([])
           setTotalProfit(0)
@@ -106,9 +104,6 @@ export function RevenueChart() {
             ]
           }
         })
-        
-
-        console.log("All inner trade_data items:", allTradeDatas)
 
         // Now filter & process
         const exitedTrades = allTradeDatas
@@ -117,7 +112,6 @@ export function RevenueChart() {
             const entry = Number(td.entry)
             const exit = Number(td.exitPrice)
             if (isNaN(entry) || isNaN(exit)) {
-              console.warn(`Skipping invalid numbers in trade ${td.parentId}`)
               return null
             }
             const date = td.exitDate || td.createdAt
@@ -130,7 +124,6 @@ export function RevenueChart() {
           })
           .filter(Boolean) as { date: string; value: number; stock: string; type: string }[]
 
-        console.log("Processed exited trades:", exitedTrades)
         // Group by date and calculate daily profit
         const dailyProfitMap = exitedTrades.reduce(
           (acc, trade) => {
@@ -140,14 +133,10 @@ export function RevenueChart() {
           {} as Record<string, number>,
         )
 
-        console.log("Daily profit map:", dailyProfitMap) // Log the daily profit map
-
         // Convert to chart data and sort
         const sortedData = Object.entries(dailyProfitMap)
           .map(([date, value]) => ({ date, value }))
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-        console.log("Sorted chart data:", sortedData) // Log the sorted data for chart
 
         // Calculate metrics
         const total = sortedData.reduce((sum, day) => sum + day.value, 0)
@@ -177,7 +166,7 @@ export function RevenueChart() {
     return (
       <Card className="col-span-2">
         <CardHeader>
-          <CardTitle>Trade Performance</CardTitle>
+          <CardTitle>Revenue Generated</CardTitle>
         </CardHeader>
         <CardContent className="h-[300px] flex items-center justify-center">
           <LoadingSpinner />
@@ -190,7 +179,7 @@ export function RevenueChart() {
     <Card className="col-span-2">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          <span className="text-lg font-semibold">Trade Performance</span>
+          <span className="text-lg font-semibold">Revenue Generated</span>
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold">₹{totalProfit.toLocaleString()}</span>
             <span
