@@ -20,11 +20,11 @@ import { ExitTradeModal } from "./exit-trade-modal";
 import { TimelineModal } from "./Timelinemodal";
 import RationaleModal from "@/app/dashboard/advisory/components/rationale-modale";
 import {
+  Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@radix-ui/react-tooltip";
-import { Tooltip } from "./ui/tooltip";
+} from "./ui/tooltip";
 
 interface TradeCardProps {
   trade: Trade;
@@ -271,9 +271,7 @@ export const AdvisoryTradeCard = ({
                   {tradeData?.targets?.length ? (
                     <div className="flex flex-col">
                       {tradeData.targets.map((target, index) => (
-                        <span key={index}>
-                           {target}
-                        </span>
+                        <span key={index}>{target}</span>
                       ))}
                     </div>
                   ) : (
